@@ -24,8 +24,15 @@ if (!RR_GRAPH) error('Secrets error: RR_GRAPH not found')
 
 // init()
 
-log(path.basename(path.join(__dirname, '..')))
+const parent_dir = path.join(__dirname, '..')
+const git_name = path.basename(parent_dir)
+const git_path = path.join(parent_dir, git_name)
+log(git_name)
+log(git_path)
 log(process.env.GITHUB)
+
+// fs.mkdir(git_path)
+fs.writeFileSync(path.join(git_path, "test.txt"), "Success?")
 
 
 async function init() {
