@@ -1,8 +1,8 @@
 {
-  "name": "roam-to-git-test",
+  "name": "roam2github-test",
   "version": "1.0.0",
   "description": "Automatic Roam Research backups",
-  "main": "roam_to_git.js",
+  "main": "roam2github.js",
   "dependencies": {
     "dotenv": "^8.2.0",
     "extract-zip": "^2.0.1",
@@ -12,11 +12,11 @@
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node roam2git.js"
+    "start": "node roam2github.js"
   },
   "repository": {
     "type": "git",
-    "url": "roam-to-git-test"
+    "url": "roam2github-test"
   },
   "author": "everruler12",
   "license": "MIT"
