@@ -1,5 +1,5 @@
 const path = require('path')
-const fs = require('fs-extra') // for mkdirp() and move() and to promisfy all so don't have to use fs.promises
+const fs = require('fs-extra') // for mkdirp() and output() and remove() ~~and move()~~ and to promisfy all so don't have to use fs.promises
 const puppeteer = require('puppeteer')
 const extract = require('extract-zip')
 
@@ -33,9 +33,6 @@ function getRepoPath() {
     const repo_name = path.basename(parent_dir)
     return path.join(parent_dir, repo_name)
 }
-
-// fs.mkdirSync(backup_dir) // check if doesn't exist first!
-// fs.writeFileSync(path.join(backup_dir, "test2.txt"), "Success? YES! 2")
 
 init()
 
@@ -73,7 +70,7 @@ async function roam_login(page) {
 
             const email_selector = 'input[name="email"]'
 
-            log('Waiting for email field')
+            log('Waiting for login form')
             await page.waitForSelector(email_selector)
 
             log('Filling email field')
@@ -147,11 +144,11 @@ async function roam_export(page) {
                 [...document.querySelectorAll('button')].find(button => button.innerText == 'Export All').click()
             })
 
-            log('Waiting for download')
+            log('Waiting for download to start')
             await page.waitForSelector('.bp3-spinner')
             await page.waitForSelector('.bp3-spinner', { hidden: true })
 
-            log('JSON downloaded')
+            log('JSON container downloaded')
 
             resolve()
         } catch (err) { reject(err) }
@@ -162,14 +159,14 @@ async function extract_json() {
     return new Promise(async (resolve, reject) => {
         try {
 
-            log('Checking download_dir')
+            // log('Checking download_dir')
             const files = await fs.readdir(download_dir)
 
             if (files.length === 0) {
                 reject('Extraction error: download dir is empty')
 
             } else if (files) {
-                log('Found', files)
+                // log('Found', files)
                 const file = files[0]
 
                 const source = path.join(download_dir, file)
@@ -178,23 +175,26 @@ async function extract_json() {
                 log('Extracting JSON from ' + file)
                 await extract(source, { dir: target })
 
-                log('Extraction complete')
+                // log('Extraction complete')
 
 
-                // MOVE to repo dir and commit
-                // NO, have to open, stringify(,null,2), then save to new file
-                // change JSON downloaded log to Downloaded Roam-Export-1234567890.zip
+
+                // IDEA change JSON downloaded log to Downloaded Roam-Export-1234567890.zip
                 const json_filename = `${RR_GRAPH}.json`
-                const oldPath = path.join(target, json_filename)
-                const newPath = path.join(backup_dir, 'json', json_filename)
+                const json_fullpath = path.join(target, json_filename)
+                const new_json_fullpath = path.join(backup_dir, 'json', json_filename)
 
-                log('Moving JSON to backup')
-                await fs.move(oldPath, newPath, { overwrite: true })
-                log('Moved')
+                log('Formatting JSON')
+                const json = await fs.readJson(json_fullpath)
+                const new_json = JSON.stringify(json, null, 2)
 
-                log('Deleting download_dir')
-                await fs.rmdir(download_dir, { recursive: true })
-                log('download_dir deleted')
+                // log('Saving formatted JSON')
+                await fs.outputFile(new_json_fullpath, new_json)
+
+                log('Cleaning up')
+                // log('Deleting download_dir')
+                await fs.remove(download_dir, { recursive: true })
+                // log('download_dir deleted')
 
                 resolve()
             }
