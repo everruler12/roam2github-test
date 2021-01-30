@@ -1,7 +1,7 @@
 {
   "name": "roam-to-git-test",
   "version": "1.0.0",
-  "description": "",
+  "description": "Automatic Roam Research backups",
   "main": "roam_to_git.js",
   "dependencies": {
     "dotenv": "^8.2.0",
