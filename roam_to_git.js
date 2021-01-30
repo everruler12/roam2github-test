@@ -103,6 +103,7 @@ async function roam_export(page) {
             // CHECK if have permission to view graph
             // IDEAS check for .navbar for app
             // IDEAS wait for astrolabe spinner to stop
+            // IDEAS use debug timestamp and line
             await page.waitForSelector('.bp3-icon-more')
 
             // console.log('R2G Clicking "Share, export and more"')
@@ -164,6 +165,8 @@ async function extract_json() {
                     await extract(source, { dir: target })
 
                     console.log('R2G Extraction complete')
+
+                    // MOVE to repo dir and commit
                     resolve()
                 } catch (err) {
                     reject(`Extraction error: ${err}`)
