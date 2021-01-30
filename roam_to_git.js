@@ -1,5 +1,6 @@
-const fs = require('fs')
 const path = require('path')
+const fs = require('fs')
+const fsPromises = require('fs').promises
 const puppeteer = require('puppeteer')
 const extract = require('extract-zip')
 
@@ -13,21 +14,26 @@ try {
     if (fs.existsSync(path.join(__dirname, '.env'))) {
         require('dotenv').config()
     }
-} catch (err) { catcher(`.env file existence error: ${err}`) }
+} catch (err) { error(`.env file existence error: ${err}`) }
 
 const { RR_EMAIL, RR_PASSWORD, RR_GRAPH } = process.env
 
-if (!RR_EMAIL) catcher('Secrets error: RR_EMAIL not found')
-if (!RR_PASSWORD) catcher('Secrets error: RR_PASSWORD not found')
-if (!RR_GRAPH) catcher('Secrets error: RR_GRAPH not found')
 
-init()
+if (!RR_EMAIL) error('Secrets error: RR_EMAIL not found')
+if (!RR_PASSWORD) error('Secrets error: RR_PASSWORD not found')
+if (!RR_GRAPH) error('Secrets error: RR_GRAPH not found')
+
+// init()
+
+log(process.env.TEST)
+log(process.env.GITHUB)
+
 
 async function init() {
     try {
         // deleteDir(download_dir)
 
-        console.log('R2G Creating browser')
+        log('Creating browser')
         const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
         // const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
 
@@ -37,13 +43,13 @@ async function init() {
         await roam_login(page)
         await roam_export(page)
 
-        console.log('R2G Closing browser')
+        log('Closing browser')
         await browser.close()
 
         await extract_json()
         // deleteDir(download_dir)
 
-    } catch (err) { catcher(err) }
+    } catch (err) { error(err) }
 
     console.timeEnd('R2G Exit after')
 }
@@ -52,21 +58,21 @@ async function roam_login(page) {
     return new Promise(async (resolve, reject) => {
         try {
 
-            console.log('R2G Navigating to login page')
+            log('Navigating to login page')
             await page.goto('https://roamresearch.com/#/signin')
 
             const email_selector = 'input[name="email"]'
 
-            console.log('R2G Waiting for email field')
+            log('Waiting for email field')
             await page.waitForSelector(email_selector)
 
-            console.log('R2G Filling email field')
+            log('Filling email field')
             await page.type(email_selector, RR_EMAIL)
 
-            console.log('R2G Filling password field')
+            log('Filling password field')
             await page.type('input[name="password"]', RR_PASSWORD)
 
-            console.log('R2G Clicking "Sign In"')
+            log('Clicking "Sign In"')
             await page.evaluate(() => {
                 [...document.querySelectorAll('button')].find(button => button.innerText == 'Sign In').click()
             })
@@ -79,9 +85,9 @@ async function roam_login(page) {
             const error_el = await page.$(login_error_selector)
             if (error_el) {
                 const error_message = await page.evaluate(el => el.innerText, error_el)
-                reject(`Login error: ${error_message}`)
+                reject(`Login error. Roam says: "${error_message}"`)
             } else if (await page.$(graphs_selector)) {
-                console.log('R2G Login successful')
+                log('Login successful')
                 resolve()
             } else { // timeout
                 reject('Login error: unknown')
@@ -95,49 +101,50 @@ async function roam_export(page) {
     return new Promise(async (resolve, reject) => {
         try {
 
-            console.log('R2G Navigating to graph')
+            log('Navigating to graph')
             await page.goto('https://roamresearch.com/404')// workaround to get disablecss and disablejs parameters to work by navigating away due to issue with puppeteer and # hash navigation (used in SPAs like Roam)
             await page.goto(`https://roamresearch.com/#/app/${RR_GRAPH}?disablecss=true&disablejs=true`)
 
-            console.log('R2G Waiting for graph to load')
+            log('Waiting for graph to load')
             // CHECK if have permission to view graph
             // IDEAS check for .navbar for app
             // IDEAS wait for astrolabe spinner to stop
             // IDEAS use debug timestamp and line
             // IDEAS allow multiple graphs
             // TODO try: throw 'err'
+            // IDEA function log(...message) {log('DEBUG', current time ,...message)}
             await page.waitForSelector('.bp3-icon-more')
 
-            // console.log('R2G Clicking "Share, export and more"')
+            // log('Clicking "Share, export and more"')
             await page.click('.bp3-icon-more')
 
-            // console.log('R2G Clicking "Export All"')
+            // log('Clicking "Export All"')
             await page.evaluate(() => {
                 [...document.querySelectorAll('li .bp3-fill')].find(li => li.innerText == 'Export All').click()
             })
 
-            // console.log('R2G Waiting for export dialog')
+            // log('Waiting for export dialog')
             await page.waitForSelector('.bp3-dialog .bp3-button-text')
 
-            // console.log('R2G Clicking Export Format')
+            // log('Clicking Export Format')
             await page.click('.bp3-dialog .bp3-button-text')
 
 
-            // console.log('R2G Clicking "JSON"')
+            // log('Clicking "JSON"')
             await page.evaluate(() => {
                 [...document.querySelectorAll('.bp3-text-overflow-ellipsis')].find(dropdown => dropdown.innerText == 'JSON').click()
             })
 
-            // console.log('R2G Clicking "Export All"')
+            // log('Clicking "Export All"')
             await page.evaluate(() => {
                 [...document.querySelectorAll('button')].find(button => button.innerText == 'Export All').click()
             })
 
-            console.log('R2G Waiting for download')
+            log('Waiting for download')
             await page.waitForSelector('.bp3-spinner')
             await page.waitForSelector('.bp3-spinner', { hidden: true })
 
-            console.log('R2G JSON downloaded')
+            log('JSON downloaded')
 
             resolve()
         } catch (err) { reject(err) }
@@ -146,65 +153,63 @@ async function roam_export(page) {
 
 async function extract_json() {
     return new Promise(async (resolve, reject) => {
+        try {
 
-        console.log('R2G Detecting download')
-
-        await fs.readdir(download_dir, async function (err, files) {
-            if (err) {
-                reject(`Read download dir error: ${err}`)
-            }
+            log('Checking download_dir')
+            const files = await fs.promises.readdir(download_dir)
 
             if (files.length === 0) {
                 reject('Extraction error: download dir is empty')
+
             } else if (files) {
+                log('Found', files)
                 const file = files[0]
 
                 const source = path.join(download_dir, file)
                 const target = path.join(download_dir, '_extraction')
 
-                try {
-                    console.log('R2G Extracting JSON from ' + file)
-                    await extract(source, { dir: target })
+                log('Extracting JSON from ' + file)
+                await extract(source, { dir: target })
 
-                    console.log('R2G Extraction complete')
+                log('Extraction complete')
 
 
-                    // MOVE to repo dir and commit
-                    // NO, have to open, stringify(,null,2), then save to new file
-                    // save to path.join(__dirname, '..', 'json', json_filename) // if write auto does mkdir
-                    const json_filename = `${RR_GRAPH}.json`
-                    const oldPath = path.join(target, json_filename)
-                    const newPath = path.join(__dirname, '..', json_filename)
+                // MOVE to repo dir and commit
+                // NO, have to open, stringify(,null,2), then save to new file
+                // save to path.join(__dirname, '..', 'json', json_filename) // if write auto does mkdir
+                const json_filename = `${RR_GRAPH}.json`
+                const oldPath = path.join(target, json_filename)
+                const newPath = path.join(__dirname, 'json', json_filename)
 
-                    await fs.rename(oldPath, newPath, function (err) {
-                        if (err) throw err
-                        console.log('Successfully renamed - AKA moved!')
-                    })
+                log('Moving JSON')
+                await fs.promises.rename(oldPath, newPath)
+                log('Successfully renamed - AKA moved!')
 
-                    await fs.rmdir(__dirname, { recursive: true }, (err) => {
-                        if (err) throw err
-                        console.log(`R2G roam-to-git-test dir deleted`)
-                    })
+                log('Deleting download_dir')
+                await fs.promises.rmdir(download_dir, { recursive: true })
+                log('download_dir deleted')
 
-                    resolve()
-                } catch (err) {
-                    reject(`Extraction error: ${err}`)
-                }
+                resolve()
             }
-        })
 
+        } catch (err) { reject(err) }
     })
 }
 
 // async function deleteDir(dir) {
 //     fs.rmdir(dir, { recursive: true }, (err) => {
 //         if (err) throw err
-//         console.log(`R2G download dir deleted`)
+//         log('download dir deleted')
 //     })
 // }
 
-function catcher(err) {
-    console.log('R2G Error -', err)
+function log(...messages) {
+    const timestamp = new Date().toISOString().replace('T', ' ').replace('Z', '')
+    console.log(timestamp, 'R2G', ...messages)
+}
+
+function error(err) {
+    log('ERROR -', err)
     console.timeEnd('R2G Exit after')
-    process.exit(1)
+    process.exit(0)
 }
