@@ -19,14 +19,14 @@ try {
     }
 } catch (err) { error(`.env file existence error: ${err}`) }
 
+const download_dir = path.join(__dirname, 'tmp')
+const backup_dir = IS_LOCAL ? path.join(__dirname, 'backup') : getRepoPath()
+
 const { RR_EMAIL, RR_PASSWORD, RR_GRAPH } = process.env
 
 if (!RR_EMAIL) error('Secrets error: RR_EMAIL not found')
 if (!RR_PASSWORD) error('Secrets error: RR_PASSWORD not found')
 if (!RR_GRAPH) error('Secrets error: RR_GRAPH not found')
-
-const download_dir = path.join(__dirname, 'downloads')
-const backup_dir = IS_LOCAL ? path.join(__dirname, 'backup') : getRepoPath()
 
 function getRepoPath() {
     // This works because actions/checkout@v2 duplicates repo name in path /home/runner/work/roam-backup/roam-backup
@@ -35,9 +35,8 @@ function getRepoPath() {
     return path.join(parent_dir, repo_name)
 }
 
-log({ backup_dir })
-// fs.mkdirSync(backup_dir) // check if doesn't xist first!
-fs.writeFileSync(path.join(backup_dir, "test2.txt"), "Success? YES!")
+// fs.mkdirSync(backup_dir) // check if doesn't exist first!
+fs.writeFileSync(path.join(backup_dir, "test2.txt"), "Success? YES! 2")
 
 // init()
 
@@ -205,12 +204,11 @@ async function extract_json() {
     })
 }
 
-// async function deleteDir(dir) {
-//     fs.rmdir(dir, { recursive: true }, (err) => {
-//         if (err) throw err
-//         log('download dir deleted')
-//     })
-// }
+async function deleteDownloads(dir) {
+    // if already doesn't exist, don't log
+    fs.promises.rmdir(download_dir, { recursive: true })
+    log('download dir deleted')
+}
 
 function log(...messages) {
     const timestamp = new Date().toISOString().replace('T', ' ').replace('Z', '')
