@@ -1,9 +1,14 @@
 # roam2git
 
-based on roam-to-git
+Inspired by https://github.com/MatthieuBizien/roam-to-git
 
-plans
+### Differences
 
-[ ] edn support
+- Uses Node and Puppeteer instead.
+- Only backups up JSON (markdown causes too many errors)
+- better error debugging
 
-[ ] multiple graph backups in same repo
+### Plans
+
+- [ ] edn support
+- [ ] multiple graph backups in same repo
