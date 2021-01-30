@@ -1,4 +1,4 @@
-# roam2git
+# Roam2Github
 
 Inspired by https://github.com/MatthieuBizien/roam-to-git
 
