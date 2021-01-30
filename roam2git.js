@@ -21,11 +21,11 @@ try {
 const download_dir = path.join(__dirname, 'tmp')
 const backup_dir = IS_LOCAL ? path.join(__dirname, 'backup') : getRepoPath()
 
-const { RR_EMAIL, RR_PASSWORD, RR_GRAPH } = process.env
+const { R2G_EMAIL, R2G_PASSWORD, R2G_GRAPH } = process.env
 
-if (!RR_EMAIL) error('Secrets error: RR_EMAIL not found')
-if (!RR_PASSWORD) error('Secrets error: RR_PASSWORD not found')
-if (!RR_GRAPH) error('Secrets error: RR_GRAPH not found')
+if (!R2G_EMAIL) error('Secrets error: R2G_EMAIL not found')
+if (!R2G_PASSWORD) error('Secrets error: R2G_PASSWORD not found')
+if (!R2G_GRAPH) error('Secrets error: R2G_GRAPH not found')
 
 function getRepoPath() {
     // This works because actions/checkout@v2 duplicates repo name in path /home/runner/work/roam-backup/roam-backup
@@ -74,10 +74,10 @@ async function roam_login(page) {
             await page.waitForSelector(email_selector)
 
             log('Filling email field')
-            await page.type(email_selector, RR_EMAIL)
+            await page.type(email_selector, R2G_EMAIL)
 
             log('Filling password field')
-            await page.type('input[name="password"]', RR_PASSWORD)
+            await page.type('input[name="password"]', R2G_PASSWORD)
 
             log('Clicking "Sign In"')
             await page.evaluate(() => {
@@ -110,7 +110,7 @@ async function roam_export(page) {
 
             log('Navigating to graph')
             await page.goto('https://roamresearch.com/404')// workaround to get disablecss and disablejs parameters to work by navigating away due to issue with puppeteer and # hash navigation (used in SPAs like Roam)
-            await page.goto(`https://roamresearch.com/#/app/${RR_GRAPH}?disablecss=true&disablejs=true`)
+            await page.goto(`https://roamresearch.com/#/app/${R2G_GRAPH}?disablecss=true&disablejs=true`)
 
             log('Waiting for graph to load')
             // CHECK if have permission to view graph
@@ -180,7 +180,7 @@ async function extract_json() {
 
 
                 // IDEA change JSON downloaded log to Downloaded Roam-Export-1234567890.zip
-                const json_filename = `${RR_GRAPH}.json`
+                const json_filename = `${R2G_GRAPH}.json`
                 const json_fullpath = path.join(target, json_filename)
                 const new_json_fullpath = path.join(backup_dir, 'json', json_filename)
 
