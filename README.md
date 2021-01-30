@@ -4,5 +4,6 @@ based on roam-to-git
 
 plans
 
-[] edn support
-[] multiple graph backups in same repo
+[ ] edn support
+
+[ ] multiple graph backups in same repo
