@@ -15,24 +15,25 @@ try {
     }
 } catch (err) { error(`.env file existence error: ${err}`) }
 
-const { RR_EMAIL, RR_PASSWORD, RR_GRAPH } = process.env
-
+const { RR_EMAIL, RR_PASSWORD, RR_GRAPH, IS_GITHUB_ACTION } = process.env
+const repo_path = IS_GITHUB_ACTION ? getRepoPath() : path.join(__dirname, 'backup')
 
 if (!RR_EMAIL) error('Secrets error: RR_EMAIL not found')
 if (!RR_PASSWORD) error('Secrets error: RR_PASSWORD not found')
 if (!RR_GRAPH) error('Secrets error: RR_GRAPH not found')
 
+function getRepoPath() {
+    // This works because actions/checkout@v2 duplicates repo name in path /home/runner/work/roam-backup/roam-backup
+    const parent_dir = path.join(__dirname, '..')
+    const repo_name = path.basename(parent_dir)
+    return path.join(parent_dir, repo_name)
+}
+
+const repo_path = getRepoPath()
+
+fs.writeFileSync(path.join(repo_path, "test2.txt"), "Success? YES!")
+
 // init()
-
-const parent_dir = path.join(__dirname, '..')
-const git_name = path.basename(parent_dir)
-const git_path = path.join(parent_dir, git_name)
-log(git_name)
-log(git_path)
-
-// fs.mkdir(git_path)
-fs.writeFileSync(path.join(git_path, "test2.txt"), "Success?")
-
 
 async function init() {
     try {
