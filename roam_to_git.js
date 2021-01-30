@@ -41,9 +41,14 @@ async function init() {
         console.log('R2G Closing browser')
         await browser.close()
 
-        await extract_json('')
+        await extract_json()
         // deleteDir(temp_dir)
-    } catch (err) { catcher(err) }
+
+    } catch (err) {
+        console.log('R2G Error -', err)
+        console.timeEnd('R2G Exit after')
+        process.exit(1)
+    }
 
     console.timeEnd('R2G Exit after')
 }
@@ -51,6 +56,7 @@ async function init() {
 async function roam_login(page) {
     return new Promise(async (resolve, reject) => {
         try {
+
             console.log('R2G Navigating to login page')
             await page.goto('https://roamresearch.com/#/signin')
 
@@ -78,13 +84,14 @@ async function roam_login(page) {
             const error_el = await page.$(login_error_selector)
             if (error_el) {
                 const error_message = await page.evaluate(el => el.innerText, error_el)
-                reject('Login error:', error_message)
+                reject(`Login error: ${error_message}`)
             } else if (await page.$(graphs_selector)) {
                 console.log('R2G Login successful')
                 resolve()
             } else { // timeout
                 reject('Login error: unknown')
             }
+
         } catch (err) { reject(err) }
     })
 }
@@ -92,6 +99,7 @@ async function roam_login(page) {
 async function roam_export(page) {
     return new Promise(async (resolve, reject) => {
         try {
+
             console.log('R2G Navigating to graph')
             await page.goto('https://roamresearch.com/404')// workaround of navigating away to get disablecss and disablejs parameters to work due to issue with puppeteer and # hash navigation used in SPAs like Roam
             await page.goto(`https://roamresearch.com/#/app/${RR_GRAPH}?disablecss=true&disablejs=true`)
@@ -133,6 +141,7 @@ async function roam_export(page) {
 
             console.log('R2G JSON downloaded')
 
+            resolve()
         } catch (err) { reject(err) }
     })
 }
@@ -147,8 +156,7 @@ async function extract_json() {
             }
 
             if (files.length === 0) {
-                console.log('R2G Extraction error: temp dir is empty')
-                reject()
+                reject('Extraction error: temp dir is empty')
             } else if (files) {
                 const file = files[0]
 
@@ -158,11 +166,11 @@ async function extract_json() {
                 try {
                     console.log('R2G Extracting ' + file)
                     await extract(source, { dir: target })
+
                     console.log('R2G Extraction complete')
                     resolve()
                 } catch (err) {
-                    console.log('R2G Extraction error:', err)
-                    reject()
+                    reject(`Extraction error: ${err}`)
                 }
             }
         })
@@ -179,9 +187,3 @@ async function deleteDir(dir) {
 // async function wait(ms) {
 //     await new Promise(resolve => setTimeout(resolve, ms))
 // }
-
-function catcher(err) {
-    console.log('R2G Error -', err)
-    console.timeEnd('R2G Exit after')
-    process.exit(1)
-}
