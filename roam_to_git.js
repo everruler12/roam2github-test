@@ -14,11 +14,11 @@ try {
     }
 } catch (err) { catcher(`.env file existence error: ${err}`) }
 
-const { RR_EMAIL, RR_PASSWORD, RR_GRAPH } = process.env
+// const { RR_EMAIL, RR_PASSWORD, RR_GRAPH } = process.env
 
-if (!RR_EMAIL) catcher('Secrets error: RR_EMAIL not found')
-if (!RR_PASSWORD) catcher('Secrets error: RR_PASSWORD not found')
-if (!RR_GRAPH) catcher('Secrets error: RR_GRAPH not found')
+// if (!RR_EMAIL) catcher('Secrets error: RR_EMAIL not found')
+if (!process.env.RR_PASSWORD) catcher('Secrets error: RR_PASSWORD not found')
+// if (!RR_GRAPH) catcher('Secrets error: RR_GRAPH not found')
 
 init()
 
