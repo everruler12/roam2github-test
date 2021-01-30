@@ -10,8 +10,7 @@ console.time('R2G Exit after')
 const download_dir = path.join(__dirname, 'downloads')
 
 try {
-    // uses .env file locally
-    if (fs.existsSync(path.join(__dirname, '.env'))) {
+    if (fs.existsSync(path.join(__dirname, '.env'))) {// uses .env file locally
         require('dotenv').config()
     }
 } catch (err) { error(`.env file existence error: ${err}`) }
@@ -25,7 +24,7 @@ if (!RR_GRAPH) error('Secrets error: RR_GRAPH not found')
 
 // init()
 
-log(process.env.TEST)
+log(__dirname)
 // log(process.env.GITHUB)
 
 
@@ -109,10 +108,7 @@ async function roam_export(page) {
             // CHECK if have permission to view graph
             // IDEAS check for .navbar for app
             // IDEAS wait for astrolabe spinner to stop
-            // IDEAS use debug timestamp and line
             // IDEAS allow multiple graphs
-            // TODO try: throw 'err'
-            // IDEA function log(...message) {log('DEBUG', current time ,...message)}
             await page.waitForSelector('.bp3-icon-more')
 
             // log('Clicking "Share, export and more"')
@@ -211,5 +207,5 @@ function log(...messages) {
 function error(err) {
     log('ERROR -', err)
     console.timeEnd('R2G Exit after')
-    process.exit(0)
+    process.exit(1)
 }
