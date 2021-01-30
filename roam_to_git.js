@@ -36,9 +36,9 @@ function getRepoPath() {
 }
 
 // fs.mkdirSync(backup_dir) // check if doesn't exist first!
-fs.writeFileSync(path.join(backup_dir, "test2.txt"), "Success? YES! 2")
+// fs.writeFileSync(path.join(backup_dir, "test2.txt"), "Success? YES! 2")
 
-// init()
+init()
 
 async function init() {
     try {
@@ -187,7 +187,7 @@ async function extract_json() {
                 // save to path.join(__dirname, '..', 'json', json_filename) // if write auto does mkdir
                 const json_filename = `${RR_GRAPH}.json`
                 const oldPath = path.join(target, json_filename)
-                const newPath = path.join(__dirname, 'json', json_filename)
+                const newPath = path.join(backup_dir, 'json', json_filename)
 
                 log('Moving JSON')
                 await fs.promises.rename(oldPath, newPath)
@@ -204,11 +204,11 @@ async function extract_json() {
     })
 }
 
-async function deleteDownloads(dir) {
-    // if already doesn't exist, don't log
-    fs.promises.rmdir(download_dir, { recursive: true })
-    log('download dir deleted')
-}
+// async function deleteDownloads(dir) {
+//     // if already doesn't exist, don't log
+//     fs.promises.rmdir(download_dir, { recursive: true })
+//     log('download dir deleted')
+// }
 
 function log(...messages) {
     const timestamp = new Date().toISOString().replace('T', ' ').replace('Z', '')
