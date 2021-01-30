@@ -6,14 +6,16 @@ const extract = require('extract-zip')
 
 console.time('R2G Exit after')
 
-let IS_GITHUB_ACTION
+// NEED better check, because .env could exist in repo. like check of secrets exist in process.env, if so, IS_GITHUB_ACTION = true, other wise try local .env, and check again
+let IS_LOCAL
 
 try {
-    if (fs.existsSync(path.join(__dirname, '.env'))) {// uses .env file locally
+    // check for local .env
+    if (fs.existsSync(path.join(__dirname, '.env'))) {
         require('dotenv').config()
-        IS_GITHUB_ACTION = false
+        IS_LOCAL = true
     } else {
-        IS_GITHUB_ACTION = true
+        IS_LOCAL = false
     }
 } catch (err) { error(`.env file existence error: ${err}`) }
 
@@ -24,7 +26,7 @@ if (!RR_PASSWORD) error('Secrets error: RR_PASSWORD not found')
 if (!RR_GRAPH) error('Secrets error: RR_GRAPH not found')
 
 const download_dir = path.join(__dirname, 'downloads')
-const backup_dir = IS_GITHUB_ACTION ? getRepoPath() : path.join(__dirname, 'backup')
+const backup_dir = IS_LOCAL ? path.join(__dirname, 'backup') : getRepoPath()
 
 function getRepoPath() {
     // This works because actions/checkout@v2 duplicates repo name in path /home/runner/work/roam-backup/roam-backup
@@ -33,6 +35,8 @@ function getRepoPath() {
     return path.join(parent_dir, repo_name)
 }
 
+log({ backup_dir })
+fs.mkdirSync(backup_dir)
 fs.writeFileSync(path.join(backup_dir, "test2.txt"), "Success? YES!")
 
 // init()
