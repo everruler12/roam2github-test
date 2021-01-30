@@ -170,6 +170,8 @@ async function extract_json() {
 
 
                     // MOVE to repo dir and commit
+                    // NO, have to open, stringify(,null,2), then save to new file
+                    // save to path.join(__dirname, '..', 'json', json_filename) // if write auto does mkdir
                     const json_filename = `${RR_GRAPH}.json`
                     const oldPath = path.join(target, json_filename)
                     const newPath = path.join(__dirname, '..', json_filename)
