@@ -1,36 +1,37 @@
-const path = require('path')
 const fs = require('fs')
+const path = require('path')
 const puppeteer = require('puppeteer')
 const extract = require('extract-zip')
-const { resolve } = require('path')
 
 console.time('R2G Exit after')
 
+const download_dir = path.join(__dirname, 'downloads')
+
 try {
+    // uses .env file locally
     if (fs.existsSync(path.join(__dirname, '.env'))) {
         require('dotenv').config()
     }
-} catch (err) {
-    console.error(err)
-}
+} catch (err) { catcher(`.env file existence error: ${err}`) }
 
-const RR_EMAIL = process.env.RR_EMAIL,
-    RR_PASSWORD = process.env.RR_PASSWORD,
-    RR_GRAPH = process.env.RR_GRAPH,
-    temp_dir = path.join(__dirname, 'tmp')
+const { RR_EMAIL, RR_PASSWORD, RR_GRAPH } = process.env
+
+if (!RR_EMAIL) catcher('Secrets error: RR_EMAIL not found')
+if (!RR_PASSWORD) catcher('Secrets error: RR_PASSWORD not found')
+if (!RR_GRAPH) catcher('Secrets error: RR_GRAPH not found')
 
 init()
 
 async function init() {
     try {
-        // deleteDir(temp_dir)
+        // deleteDir(download_dir)
 
         console.log('R2G Creating browser')
         const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
         // const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
 
         const page = await browser.newPage()
-        await page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: temp_dir })
+        await page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: download_dir })
 
         await roam_login(page)
         await roam_export(page)
@@ -39,13 +40,9 @@ async function init() {
         await browser.close()
 
         await extract_json()
-        // deleteDir(temp_dir)
+        // deleteDir(download_dir)
 
-    } catch (err) {
-        console.log('R2G Error -', err)
-        console.timeEnd('R2G Exit after')
-        process.exit(1)
-    }
+    } catch (err) { catcher(err) }
 
     console.timeEnd('R2G Exit after')
 }
@@ -148,18 +145,18 @@ async function extract_json() {
 
         console.log('R2G Detecting download')
 
-        await fs.readdir(temp_dir, async function (err, files) {
+        await fs.readdir(download_dir, async function (err, files) {
             if (err) {
-                reject(`Read temp dir error: ${err}`)
+                reject(`Read download dir error: ${err}`)
             }
 
             if (files.length === 0) {
-                reject('Extraction error: temp dir is empty')
+                reject('Extraction error: download dir is empty')
             } else if (files) {
                 const file = files[0]
 
-                const source = path.join(temp_dir, file)
-                const target = path.join(temp_dir, '_extraction')
+                const source = path.join(download_dir, file)
+                const target = path.join(download_dir, '_extraction')
 
                 try {
                     console.log('R2G Extracting JSON from ' + file)
@@ -179,6 +176,12 @@ async function extract_json() {
 // async function deleteDir(dir) {
 //     fs.rmdir(dir, { recursive: true }, (err) => {
 //         if (err) throw err
-//         console.log(`R2G temp dir deleted`)
+//         console.log(`R2G download dir deleted`)
 //     })
 // }
+
+function catcher(err) {
+    console.log('R2G Error -', err)
+    console.timeEnd('R2G Exit after')
+    process.exit(1)
+}
