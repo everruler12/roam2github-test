@@ -14,8 +14,6 @@ try {
     console.error(err)
 }
 
-// console.log(process.env.RR_EMAIL)
-
 const RR_EMAIL = process.env.RR_EMAIL,
     RR_PASSWORD = process.env.RR_PASSWORD,
     RR_GRAPH = process.env.RR_GRAPH,
@@ -28,12 +26,11 @@ async function init() {
         // deleteDir(temp_dir)
 
         console.log('R2G Creating browser')
-        const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions https://github.com/ianwalter/puppeteer-container
-        // const browser = await puppeteer.launch({ headless: false }) // to test on PC and see what's going on
+        const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
+        // const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
 
         const page = await browser.newPage()
-        await page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: temp_dir }) // https://stackoverflow.com/a/52440784 for windows you'd use a path like 'c:\\path\\to\\folder' instead of '/path/to/folder'; so use path.join(foo, bar)
-        // page.on('console', consoleObj => console.log(consoleObj.text())) // for console.log() to work in page.evaluate() https://stackoverflow.com/a/46245945
+        await page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: temp_dir })
 
         await roam_login(page)
         await roam_export(page)
@@ -148,11 +145,12 @@ async function roam_export(page) {
 
 async function extract_json() {
     return new Promise(async (resolve, reject) => {
-        console.log('R2G Extracting JSON')
+
+        console.log('R2G Detecting download')
 
         await fs.readdir(temp_dir, async function (err, files) {
             if (err) {
-                return console.log('Unable to scan directory: ' + err)
+                reject(`Read temp dir error: ${err}`)
             }
 
             if (files.length === 0) {
@@ -164,7 +162,7 @@ async function extract_json() {
                 const target = path.join(temp_dir, '_extraction')
 
                 try {
-                    console.log('R2G Extracting ' + file)
+                    console.log('R2G Extracting JSON from ' + file)
                     await extract(source, { dir: target })
 
                     console.log('R2G Extraction complete')
@@ -174,16 +172,13 @@ async function extract_json() {
                 }
             }
         })
+
     })
 }
 
-async function deleteDir(dir) {
-    fs.rmdir(dir, { recursive: true }, (err) => {
-        if (err) throw err
-        console.log(`R2G temp dir deleted`)
-    })
-}
-
-// async function wait(ms) {
-//     await new Promise(resolve => setTimeout(resolve, ms))
+// async function deleteDir(dir) {
+//     fs.rmdir(dir, { recursive: true }, (err) => {
+//         if (err) throw err
+//         console.log(`R2G temp dir deleted`)
+//     })
 // }
