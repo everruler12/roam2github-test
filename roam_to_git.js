@@ -96,7 +96,7 @@ async function roam_export(page) {
         try {
 
             console.log('R2G Navigating to graph')
-            await page.goto('https://roamresearch.com/404')// workaround of navigating away to get disablecss and disablejs parameters to work due to issue with puppeteer and # hash navigation used in SPAs like Roam
+            await page.goto('https://roamresearch.com/404')// workaround to get disablecss and disablejs parameters to work by navigating away due to issue with puppeteer and # hash navigation (used in SPAs like Roam)
             await page.goto(`https://roamresearch.com/#/app/${RR_GRAPH}?disablecss=true&disablejs=true`)
 
             console.log('R2G Waiting for graph to load')
@@ -104,6 +104,7 @@ async function roam_export(page) {
             // IDEAS check for .navbar for app
             // IDEAS wait for astrolabe spinner to stop
             // IDEAS use debug timestamp and line
+            // TODO try: throw 'err'
             await page.waitForSelector('.bp3-icon-more')
 
             // console.log('R2G Clicking "Share, export and more"')
@@ -166,7 +167,17 @@ async function extract_json() {
 
                     console.log('R2G Extraction complete')
 
+
                     // MOVE to repo dir and commit
+                    const json_filename = `${RR_GRAPH}.json`
+                    const oldPath = path.join(target, json_filename)
+                    const newPath = path.join(__dirname, '..', json_filename)
+
+                    await fs.rename(oldPath, newPath, function (err) {
+                        if (err) throw err
+                        console.log('Successfully renamed - AKA moved!')
+                    })
+
                     resolve()
                 } catch (err) {
                     reject(`Extraction error: ${err}`)
