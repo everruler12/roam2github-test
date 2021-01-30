@@ -29,10 +29,9 @@ const git_name = path.basename(parent_dir)
 const git_path = path.join(parent_dir, git_name)
 log(git_name)
 log(git_path)
-log(process.env.GITHUB)
 
 // fs.mkdir(git_path)
-fs.writeFileSync(path.join(git_path, "test.txt"), "Success?")
+fs.writeFileSync(path.join(git_path, "test2.txt"), "Success?")
 
 
 async function init() {
