@@ -6,21 +6,25 @@ const extract = require('extract-zip')
 
 console.time('R2G Exit after')
 
-// THIS needs to be up one level? Wait, roam-to-git needs to be out of this dir
-const download_dir = path.join(__dirname, 'downloads')
+let IS_GITHUB_ACTION
 
 try {
     if (fs.existsSync(path.join(__dirname, '.env'))) {// uses .env file locally
         require('dotenv').config()
+        IS_GITHUB_ACTION = false
+    } else {
+        IS_GITHUB_ACTION = true
     }
 } catch (err) { error(`.env file existence error: ${err}`) }
 
-const { RR_EMAIL, RR_PASSWORD, RR_GRAPH, IS_GITHUB_ACTION } = process.env
-const repo_path = IS_GITHUB_ACTION ? getRepoPath() : path.join(__dirname, 'backup')
+const { RR_EMAIL, RR_PASSWORD, RR_GRAPH } = process.env
 
 if (!RR_EMAIL) error('Secrets error: RR_EMAIL not found')
 if (!RR_PASSWORD) error('Secrets error: RR_PASSWORD not found')
 if (!RR_GRAPH) error('Secrets error: RR_GRAPH not found')
+
+const download_dir = path.join(__dirname, 'downloads')
+const backup_dir = IS_GITHUB_ACTION ? getRepoPath() : path.join(__dirname, 'backup')
 
 function getRepoPath() {
     // This works because actions/checkout@v2 duplicates repo name in path /home/runner/work/roam-backup/roam-backup
@@ -29,7 +33,7 @@ function getRepoPath() {
     return path.join(parent_dir, repo_name)
 }
 
-fs.writeFileSync(path.join(repo_path, "test2.txt"), "Success? YES!")
+fs.writeFileSync(path.join(backup_dir, "test2.txt"), "Success? YES!")
 
 // init()
 
