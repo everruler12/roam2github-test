@@ -24,8 +24,8 @@ if (!RR_GRAPH) error('Secrets error: RR_GRAPH not found')
 
 // init()
 
-log(__dirname)
-// log(process.env.GITHUB)
+log(path.basename(path.join(__dirname, '..')))
+log(process.env.GITHUB)
 
 
 async function init() {
