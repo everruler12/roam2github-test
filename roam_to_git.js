@@ -54,7 +54,7 @@ async function init() {
         await roam_export(page)
 
         log('Closing browser')
-        await browser.close()
+        browser.close()
 
         await extract_json()
         // deleteDir(download_dir)
@@ -183,7 +183,7 @@ async function extract_json() {
 
                 // MOVE to repo dir and commit
                 // NO, have to open, stringify(,null,2), then save to new file
-                // save to path.join(__dirname, '..', 'json', json_filename) // if write auto does mkdir
+                // change JSON downloaded log to Downloaded Roam-Export-1234567890.zip
                 const json_filename = `${RR_GRAPH}.json`
                 const oldPath = path.join(target, json_filename)
                 const newPath = path.join(backup_dir, 'json', json_filename)
