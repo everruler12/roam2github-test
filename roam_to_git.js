@@ -1,6 +1,5 @@
 const path = require('path')
-const fs = require('fs')
-const fsPromises = require('fs').promises
+const fs = require('fs-extra') // for mkdirp() and move() and to promisfy all so don't have to use fs.promises
 const puppeteer = require('puppeteer')
 const extract = require('extract-zip')
 
@@ -164,7 +163,7 @@ async function extract_json() {
         try {
 
             log('Checking download_dir')
-            const files = await fs.promises.readdir(download_dir)
+            const files = await fs.readdir(download_dir)
 
             if (files.length === 0) {
                 reject('Extraction error: download dir is empty')
@@ -189,12 +188,12 @@ async function extract_json() {
                 const oldPath = path.join(target, json_filename)
                 const newPath = path.join(backup_dir, 'json', json_filename)
 
-                log('Moving JSON')
-                await fs.promises.rename(oldPath, newPath)
-                log('Successfully renamed - AKA moved!')
+                log('Moving JSON to backup')
+                await fs.move(oldPath, newPath, { overwrite: true })
+                log('Moved')
 
                 log('Deleting download_dir')
-                await fs.promises.rmdir(download_dir, { recursive: true })
+                await fs.rmdir(download_dir, { recursive: true })
                 log('download_dir deleted')
 
                 resolve()
@@ -206,7 +205,7 @@ async function extract_json() {
 
 // async function deleteDownloads(dir) {
 //     // if already doesn't exist, don't log
-//     fs.promises.rmdir(download_dir, { recursive: true })
+//     fs.rmdir(download_dir, { recursive: true })
 //     log('download dir deleted')
 // }
 
