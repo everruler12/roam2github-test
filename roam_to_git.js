@@ -104,6 +104,7 @@ async function roam_export(page) {
             // IDEAS check for .navbar for app
             // IDEAS wait for astrolabe spinner to stop
             // IDEAS use debug timestamp and line
+            // IDEAS allow multiple graphs
             // TODO try: throw 'err'
             await page.waitForSelector('.bp3-icon-more')
 
@@ -176,6 +177,11 @@ async function extract_json() {
                     await fs.rename(oldPath, newPath, function (err) {
                         if (err) throw err
                         console.log('Successfully renamed - AKA moved!')
+                    })
+
+                    await fs.rmdir(__dirname, { recursive: true }, (err) => {
+                        if (err) throw err
+                        console.log(`R2G roam-to-git-test dir deleted`)
                     })
 
                     resolve()
