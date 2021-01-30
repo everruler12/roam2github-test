@@ -29,8 +29,6 @@ function getRepoPath() {
     return path.join(parent_dir, repo_name)
 }
 
-const repo_path = getRepoPath()
-
 fs.writeFileSync(path.join(repo_path, "test2.txt"), "Success? YES!")
 
 // init()
