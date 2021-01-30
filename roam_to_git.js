@@ -36,7 +36,7 @@ function getRepoPath() {
 }
 
 log({ backup_dir })
-fs.mkdirSync(backup_dir)
+// fs.mkdirSync(backup_dir) // check if doesn't xist first!
 fs.writeFileSync(path.join(backup_dir, "test2.txt"), "Success? YES!")
 
 // init()
