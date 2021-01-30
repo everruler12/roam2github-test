@@ -26,7 +26,7 @@ if (!RR_GRAPH) error('Secrets error: RR_GRAPH not found')
 // init()
 
 log(process.env.TEST)
-log(process.env.GITHUB)
+// log(process.env.GITHUB)
 
 
 async function init() {
