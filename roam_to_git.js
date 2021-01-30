@@ -5,6 +5,7 @@ const extract = require('extract-zip')
 
 console.time('R2G Exit after')
 
+// THIS needs to be up one level? Wait, roam-to-git needs to be out of this dir
 const download_dir = path.join(__dirname, 'downloads')
 
 try {
