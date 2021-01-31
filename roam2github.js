@@ -3,7 +3,7 @@ const fs = require('fs-extra') // for mkdirp() and output() and remove() ~~and m
 const puppeteer = require('puppeteer')
 const extract = require('extract-zip')
 
-const edn_formatter = require('./edn_formatter/edn_formatter').edn_formatter.core
+const edn_formatter = require('edn-formatter').edn_formatter.core
 
 console.time('R2G Exit after')
 
@@ -41,6 +41,7 @@ init()
 async function init() {
     try {
         // deleteDir(download_dir)
+        await fs.remove(download_dir, { recursive: true })
 
         log('Creating browser')
         const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
@@ -153,7 +154,8 @@ async function roam_export(page) {
 
             // log('Clicking "JSON"')
             await page.evaluate(() => {
-                [...document.querySelectorAll('.bp3-text-overflow-ellipsis')].find(dropdown => dropdown.innerText == 'JSON').click()
+                [...document.querySelectorAll('.bp3-text-overflow-ellipsis')].find(dropdown => dropdown.innerText == 'EDN').click()
+                // [...document.querySelectorAll('.bp3-text-overflow-ellipsis')].find(dropdown => dropdown.innerText == 'JSON').click()
             })
 
             // log('Clicking "Export All"')
@@ -198,32 +200,42 @@ async function extract_json() {
                 const source = path.join(download_dir, file)
                 const target = path.join(download_dir, '_extraction')
 
-                log('Extracting JSON from ' + file)
+                // log('Extracting JSON from ' + file)
+                // await extract(source, { dir: target })
+                // // log('Extraction complete')
+
+                // const json_filename = `${R2G_GRAPH}.json`
+                // const json_fullpath = path.join(target, json_filename)
+                // const new_json_fullpath = path.join(backup_dir, 'json', json_filename)
+
+                // log('Formatting JSON')
+                // const json = await fs.readJson(json_fullpath)
+                // const new_json = JSON.stringify(json, null, 2)
+
+                // // log('Saving formatted JSON')
+                // await fs.outputFile(new_json_fullpath, new_json)
+
+                log('Extracting EDN from ' + file)
                 await extract(source, { dir: target })
                 // log('Extraction complete')
 
-                const json_filename = `${R2G_GRAPH}.json`
+                const edn_prefix = '#datascript/DB '
+                const json_filename = `${R2G_GRAPH}.edn`
                 const json_fullpath = path.join(target, json_filename)
-                const new_json_fullpath = path.join(backup_dir, 'json', json_filename)
+                const new_json_fullpath = path.join(backup_dir, 'edn', json_filename)
 
-                log('Formatting JSON')
-                const json = await fs.readJson(json_fullpath)
-                const new_json = JSON.stringify(json, null, 2)
-
-                // log('Saving formatted JSON')
-                await fs.outputFile(new_json_fullpath, new_json)
-
-
-                // log('Formatting EDN')
-                // var edn = `{:schema {:create/user {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :node/subpages {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :vc/blocks {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :edit/seen-by {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :window/id {:db/unique :db.unique/identity}, :attrs/lookup {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :node/windows {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :d/v {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :block/clone {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :node/sections {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :harc/v {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :node/title {:db/unique :db.unique/identity}, :block/refs {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :harc/a {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :edit/user {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :block/subpage {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :block/children {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :block/focused-user {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :create/seen-by {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :block/uid {:db/unique :db.unique/identity}, :d/e {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :d/a {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :user/uid {:db/unique :db.unique/identity}, :node/links {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :link/to {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :user/email {:db/unique :db.unique/identity}, :query/results {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :harc/e {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :block/parents {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :block/page {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :version/id {:db/unique :db.unique/identity}}, :datoms [[1 :version/id "0.0.0" 536870913] [1 :version/nonce "uuidfdc21d6f-6e72-4ddc-a80f-583a49a2d242" 536870913] [1 :version/upgraded-nonce "uuidfdc21d6f-6e72-4ddc-a80f-583a49a2d242" 536870914] [2 :version/id "0.8.1" 536870914] [2 :version/nonce "uuid10c37e0c-409f-4585-bc21-337375512d6d" 536870919] [3 :block/uid "12mX8s2DW" 536870915] [3 :user/display-name "Erik Newhard" 536870915] [3 :user/photo-url "https://lh3.googleusercontent.com/a-/AOh14GiPJn3ovPV2ewfBUOVLsZUebHFkRvebL6nbRG2Sfg" 536870915] [3 :user/uid "PlMA638w7gW6AT6b1H1VNYEIJK43" 536870915] [4 :block/children 5 536870917] [4 :block/uid "01-30-2021" 536870916] [4 :create/time 1612054318689 536870916] [4 :create/user 3 536870916] [4 :edit/time 1612054318690 536870916] [4 :edit/user 3 536870916] [4 :log/id 1612054318688 536870916] [4 :node/title "January 30th, 2021" 536870916] [5 :block/open true 536870917] [5 :block/order 0 536870917] [5 :block/page 4 536870918] [5 :block/parents 4 536870918] [5 :block/string "test" 536870919] [5 :block/uid "hyMDPk3oi" 536870917] [5 :create/time 1612054320850 536870917] [5 :create/user 3 536870917] [5 :edit/time 1612054322951 536870919] [5 :edit/user 3 536870917]]}`
-                // var test = edn_formatter.format(edn)
-                // fs.outputFile('test.edn', test)
-                // log(test)
+                log('Formatting EDN')
+                const edn = await fs.readFile(json_fullpath, 'utf-8')
+                // log(edn)
+                var new_edn = edn_prefix + edn_formatter.format(edn.replace(edn_prefix, ''))
+                checkFormattedEDN(edn, new_edn)
+                fs.outputFile(new_json_fullpath, new_edn)
 
 
-                log('Cleaning up')
+
+                // log('Cleaning up')
                 // log('Deleting download_dir')
-                await fs.remove(download_dir, { recursive: true })
+                // await fs.remove(download_dir, { recursive: true })
                 // log('download_dir deleted')
 
                 resolve()
@@ -252,3 +264,19 @@ function error(err) {
 
 // IDEA commit screenshot if error instead of process.exit(1)
 // await page.screenshot({path: `error ${timestamp}.png`}) // will need to pass page as parameter... or set as parent scope
+
+function checkFormattedEDN(original, formatted) {
+    const reverse_format = formatted
+        .trim() // remove trailing line break
+        .split('\n') // separate by line
+        .map(line => line.trim()) // remove indents, and one extra space at end of second to last line
+        .join(' ') // replace line breaks with a space
+
+    if (original === reverse_format) {
+        log('(formatted EDN check successful)') // formatted EDN successfully reversed to match exactly with original EDN
+        return true
+    } else {
+        log('EDN Mismatch!')
+        return false
+    }
+}

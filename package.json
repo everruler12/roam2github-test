@@ -5,20 +5,18 @@
   "main": "roam2github.js",
   "dependencies": {
     "dotenv": "^8.2.0",
+    "edn-formatter": "https://github.com/everruler12/edn-formatter/tarball/main",
     "extract-zip": "^2.0.1",
     "fs-extra": "^9.1.0",
-    "lumo": "^0.20.17",
     "puppeteer": "^5.5.0"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node roam2github.js",
-    "build-edn_formatter": "cd edn_formatter && lumo --classpath src build.cljs"
+    "start": "node roam2github.js"
   },
   "repository": {
     "type": "git",
-    "url": "roam2github-test"
+    "url": "https://github.com/everruler12/roam2github-test.git"
   },
   "author": "everruler12",
   "license": "MIT"
