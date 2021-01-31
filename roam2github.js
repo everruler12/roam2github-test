@@ -4,7 +4,7 @@ const puppeteer = require('puppeteer')
 const extract = require('extract-zip')
 
 // const edn_formatter = require('edn-formatter').edn_formatter.core
-const edn_formatter = require('./edn-formatter').edn_formatter.core
+const edn_formatter = require('./edn_formatter.js').edn_formatter.core
 
 console.time('R2G Exit after')
 
