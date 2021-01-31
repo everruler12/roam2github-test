@@ -3,7 +3,8 @@ const fs = require('fs-extra') // for mkdirp() and output() and remove() ~~and m
 const puppeteer = require('puppeteer')
 const extract = require('extract-zip')
 
-const edn_formatter = require('edn-formatter').edn_formatter.core
+// const edn_formatter = require('edn-formatter').edn_formatter.core
+const edn_formatter = require('./edn-formatter').edn_formatter.core
 
 console.time('R2G Exit after')
 
