@@ -96,7 +96,7 @@ async function roam_login(page) {
                 const error_message = await page.evaluate(el => el.innerText, error_el)
                 reject(`Login error. Roam says: "${error_message}"`)
             } else if (await page.$(graphs_selector)) {
-                log('Login successful')
+                log('Login successful!')
                 resolve()
             } else { // timeout?
                 reject('Login error: unknown')
@@ -128,7 +128,7 @@ async function roam_export(page) {
             //     await page.waitForSelector('.navbar') // Likely screen saying 'You do not have permission to view this database'
             //     reject()
             // }
-            log('Graph loaded')
+            log('Graph loaded!')
 
             await page.waitForSelector('.bp3-icon-more')
 
@@ -166,7 +166,7 @@ async function roam_export(page) {
                 const files = await fs.readdir(download_dir)
 
                 if (files[0] && files[0].match(/\.zip$/)) { // contains .zip file
-                    log('JSON container downloaded:', files[0])
+                    log('JSON container downloaded!', files[0])
                     resolve()
                 } else checkDownloads()
             }
@@ -237,3 +237,6 @@ function error(err) {
     console.timeEnd('R2G Exit after')
     process.exit(1)
 }
+
+// IDEA commit screenshot if error instead of process.exit(1)
+// await page.screenshot({path: `error ${timestamp}.png`}) // will need to pass page as parameter... or set as parent scope
