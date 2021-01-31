@@ -3,3 +3,4 @@ _old versions
 backup
 tmp
 .env*
+edn_formatter/out

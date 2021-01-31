@@ -14,7 +14,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node roam2github.js",
-    "build-edn_formatter": "cd edn_formatter && lumo build.cljs"
+    "build-edn_formatter": "cd edn_formatter && lumo --classpath src build.cljs"
   },
   "repository": {
     "type": "git",
