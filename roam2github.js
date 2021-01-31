@@ -3,6 +3,14 @@ const fs = require('fs-extra') // for mkdirp() and output() and remove() ~~and m
 const puppeteer = require('puppeteer')
 const extract = require('extract-zip')
 
+const edn_formatter = require('./edn_formatter/edn_formatter').core.edn_formatter
+log(edn_formatter)
+var edn = `{:schema {:create/user {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :node/subpages {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :vc/blocks {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :edit/seen-by {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :window/id {:db/unique :db.unique/identity}, :attrs/lookup {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :node/windows {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :d/v {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :block/clone {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :node/sections {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :harc/v {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :node/title {:db/unique :db.unique/identity}, :block/refs {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :harc/a {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :edit/user {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :block/subpage {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :block/children {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :block/focused-user {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :create/seen-by {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :block/uid {:db/unique :db.unique/identity}, :d/e {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :d/a {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :user/uid {:db/unique :db.unique/identity}, :node/links {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :link/to {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :user/email {:db/unique :db.unique/identity}, :query/results {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :harc/e {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :block/parents {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/many}, :block/page {:db/valueType :db.type/ref, :db/cardinality :db.cardinality/one}, :version/id {:db/unique :db.unique/identity}}, :datoms [[1 :version/id "0.0.0" 536870913] [1 :version/nonce "uuidfdc21d6f-6e72-4ddc-a80f-583a49a2d242" 536870913] [1 :version/upgraded-nonce "uuidfdc21d6f-6e72-4ddc-a80f-583a49a2d242" 536870914] [2 :version/id "0.8.1" 536870914] [2 :version/nonce "uuid10c37e0c-409f-4585-bc21-337375512d6d" 536870919] [3 :block/uid "12mX8s2DW" 536870915] [3 :user/display-name "Erik Newhard" 536870915] [3 :user/photo-url "https://lh3.googleusercontent.com/a-/AOh14GiPJn3ovPV2ewfBUOVLsZUebHFkRvebL6nbRG2Sfg" 536870915] [3 :user/uid "PlMA638w7gW6AT6b1H1VNYEIJK43" 536870915] [4 :block/children 5 536870917] [4 :block/uid "01-30-2021" 536870916] [4 :create/time 1612054318689 536870916] [4 :create/user 3 536870916] [4 :edit/time 1612054318690 536870916] [4 :edit/user 3 536870916] [4 :log/id 1612054318688 536870916] [4 :node/title "January 30th, 2021" 536870916] [5 :block/open true 536870917] [5 :block/order 0 536870917] [5 :block/page 4 536870918] [5 :block/parents 4 536870918] [5 :block/string "test" 536870919] [5 :block/uid "hyMDPk3oi" 536870917] [5 :create/time 1612054320850 536870917] [5 :create/user 3 536870917] [5 :edit/time 1612054322951 536870919] [5 :edit/user 3 536870917]]}`
+var test = edn_formatter.format(edn)
+// fs.writeFileSync('test.txt', JSON.stringify(test))
+fs.outputFile('test.edn', test)
+log(test)
+
 console.time('R2G Exit after')
 
 // NEED better check, because .env could exist in repo. like check of secrets exist in process.env, if so, IS_GITHUB_ACTION = true, other wise try local .env, and check again
@@ -34,7 +42,7 @@ function getRepoPath() {
     return path.join(parent_dir, repo_name)
 }
 
-init()
+// init()
 
 async function init() {
     try {
@@ -47,6 +55,7 @@ async function init() {
         const page = await browser.newPage()
         page.setDefaultTimeout(600000) // 10min
         await page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: download_dir })
+        // await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3419.0 Safari/537.36'); // https://github.com/puppeteer/puppeteer/issues/1477#issuecomment-437568281
 
         await roam_login(page)
         await roam_export(page)
@@ -74,6 +83,7 @@ async function roam_login(page) {
             log('Signing in')
             // log('Waiting for login form')
             await page.waitForSelector(email_selector)
+            // possible refresh a second time on login screen https://github.com/MatthieuBizien/roam-to-git/issues/87#issuecomment-763281895
 
             // log('Filling email field')
             await page.type(email_selector, R2G_EMAIL)
