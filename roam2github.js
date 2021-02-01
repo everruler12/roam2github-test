@@ -51,8 +51,8 @@ async function init() {
         await fs.remove(tmp_dir, { recursive: true })
 
         log('Create browser')
-        // const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
-        const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
+        const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
+        // const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
 
         const page = await browser.newPage()
         page.setDefaultTimeout(TIMEOUT || 600000) // 10min default
