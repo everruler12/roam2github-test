@@ -20,17 +20,22 @@ try {
     }
 } catch (err) { error(`.env file existence error: ${err}`) }
 
-const download_dir = path.join(__dirname, 'tmp')
-const extract_dir = path.join(download_dir, '_extraction')
+const tmp_dir = path.join(__dirname, 'tmp')
+// const extract_dir = path.join(download_dir, '_extraction') // moved
 const backup_dir = IS_LOCAL ? path.join(__dirname, 'backup') : getRepoPath()
 
-let downloads_started = 0
-
-const { R2G_EMAIL, R2G_PASSWORD, R2G_GRAPH, TIMEOUT } = process.env
+const { R2G_EMAIL, R2G_PASSWORD, R2G_GRAPH, TIMEOUT, BACKUP_JSON, BACKUP_EDN, BACKUP_MARKDOWN } = process.env
 
 if (!R2G_EMAIL) error('Secrets error: R2G_EMAIL not found')
 if (!R2G_PASSWORD) error('Secrets error: R2G_PASSWORD not found')
-if (!R2G_GRAPH) error('Secrets error: R2G_GRAPH not found')
+if (!R2G_GRAPH) error('Secrets error: R2G_GRAPH not found') // can also check "Not a valid name. Names can only contain letters, numbers, dashes and underscores."
+
+const filetypes = [
+    { type: "JSON", backup: BACKUP_JSON, ext: "json" },
+    { type: "EDN", backup: BACKUP_EDN, ext: "edn" },
+    // { type: "Markdown", backup: BACKUP_MARKDOWN, ext: "md" }
+]
+// what about specifying filetype for each graph? Maybe use settings.json in root of repo. But too complicated for non-programmers to set up.
 
 function getRepoPath() {
     // This works because actions/checkout@v2 duplicates repo name in path /home/runner/work/roam-backup/roam-backup
@@ -43,41 +48,47 @@ init()
 
 async function init() {
     try {
-        await fs.remove(download_dir, { recursive: true })
+        await fs.remove(tmp_dir, { recursive: true })
 
         log('Create browser')
-        const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
-        // const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
+        // const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
+        const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
 
         const page = await browser.newPage()
         page.setDefaultTimeout(TIMEOUT || 600000) // 10min default
-        await page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: download_dir })
+        // await page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: download_dir }) // moved
         // page.on('console', consoleObj => console.log(consoleObj.text())) // for console.log() to work in page.evaluate() https://stackoverflow.com/a/46245945
         // await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3419.0 Safari/537.36'); // https://github.com/puppeteer/puppeteer/issues/1477#issuecomment-437568281
 
         log('Login')
         await roam_login(page)
 
-        // for each graph {
-        log('Open Graph')
-        await roam_open_graph(page)
+        for (const g of R2G_GRAPH.split(/,|\n/)) { // split by comma or linebreak
+            const graph = g.trim()
 
-        log('Download JSON')
-        await roam_download(page, 'JSON')
+            log('Open graph', censor(graph))
+            await roam_open_graph(page, graph)
 
-        log('Download EDN')
-        await roam_download(page, 'EDN')
-        // }
+            for (const f of filetypes) {
+                if (f.backup === undefined || f.backup === true) {
+                    const download_dir = path.join(tmp_dir, graph, f.ext)
+                    await page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: download_dir })
+
+                    log('Export', f.type)
+                    await roam_export(page, f.type, download_dir)
+
+                    // log('Extract zips')
+                    // await extract_zips(f.ext)
+
+                    // log('Format and save')
+                    // await format_and_save(f.ext)
+                }
+            }
+        }
 
         log('Close browser')
         browser.close()
-
-        log('Extract zips')
-        await extract_zips()
-
-        log('Format and save')
-        await format_and_save()
-        // deleteDir(download_dir)
+        // deleteDir(tmp_dir)
 
         log('DONE!')
 
@@ -110,6 +121,8 @@ async function roam_login(page) {
             })
 
             // possible refresh a second time on login screen https://github.com/MatthieuBizien/roam-to-git/issues/87#issuecomment-763281895
+            // R2G - Clicking "Sign In"
+            // R2G ERROR - Error: Protocol error (DOM.describeNode): Cannot find context with specified id
 
             const login_error_selector = 'div[style="font-size: 12px; color: red;"]' // error message on login page
             const graphs_selector = '.my-graphs' // successful login, on graphs selection page
@@ -117,12 +130,17 @@ async function roam_login(page) {
             await page.waitForSelector(login_error_selector + ', ' + graphs_selector)
 
             const error_el = await page.$(login_error_selector)
+
             if (error_el) {
+
                 const error_message = await page.evaluate(el => el.innerText, error_el)
                 reject(`Login error. Roam says: "${error_message}"`)
+
             } else if (await page.$(graphs_selector)) {
+
                 log('Login successful!')
                 resolve()
+
             } else { // timeout?
                 reject('Login error: unknown')
             }
@@ -131,18 +149,27 @@ async function roam_login(page) {
     })
 }
 
-async function roam_open_graph(page) {
+async function roam_open_graph(page, graph) {
     return new Promise(async (resolve, reject) => {
         try {
 
             log('- Navigating to graph')
-            // log('Navigating to graph', R2G_GRAPH.split('').join(' '))
             await page.goto('https://roamresearch.com/404')// workaround to get disablecss and disablejs parameters to work by navigating away due to issue with puppeteer and # hash navigation (used in SPAs like Roam)
-            await page.goto(`https://roamresearch.com/#/app/${R2G_GRAPH}?disablecss=true&disablejs=true`)
+            /* ERROR occasionally:
+            R2G ERROR - Error: net::ERR_ABORTED at https://roamresearch.com/404
+            at navigate (c:\Users\cyber\Desktop\roam2github-test\node_modules\puppeteer\lib\cjs\puppeteer\common\FrameManager.js:115:23)
+            at processTicksAndRejections (internal/process/task_queues.js:93:5)
+            at async FrameManager.navigateFrame (c:\Users\cyber\Desktop\roam2github-test\node_modules\puppeteer\lib\cjs\puppeteer\common\FrameManager.js:90:21)
+            at async Frame.goto (c:\Users\cyber\Desktop\roam2github-test\node_modules\puppeteer\lib\cjs\puppeteer\common\FrameManager.js:417:16)
+            at async Page.goto (c:\Users\cyber\Desktop\roam2github-test\node_modules\puppeteer\lib\cjs\puppeteer\common\Page.js:784:16)
+            at async c:\Users\cyber\Desktop\roam2github-test\roam2github.js:156:13
+            */
+            await page.goto(`https://roamresearch.com/#/app/${graph}?disablecss=true&disablejs=true`)
 
             // log('- Waiting for astrolabe spinner')
             await page.waitForSelector('.loading-astrolabe')
             log('- astrolabe spinning...')
+
             await page.waitForSelector('.loading-astrolabe', { hidden: true })
             log('- astrolabe spinning stopped')
 
@@ -159,7 +186,7 @@ async function roam_open_graph(page) {
     })
 }
 
-async function roam_download(page, filetype) {
+async function roam_export(page, filetype, download_dir) {
     return new Promise(async (resolve, reject) => {
         try {
 
@@ -173,6 +200,7 @@ async function roam_download(page, filetype) {
             // await page.waitForFunction(`[...document.querySelectorAll('li .bp3-fill')].find(li => li.innerText == 'Export All')`)
             // await page.waitForFunction(() => [...document.querySelectorAll('li .bp3-fill')].find(li => li.innerText == 'Export All'))
             const exportAll_option = await page.waitForXPath("//div[@class='bp3-text-overflow-ellipsis bp3-fill' and contains(., 'Export All')]")
+
             log('- Clicking "Export All" option')
             // await page.evaluate(() => { [...document.querySelectorAll('li .bp3-fill')].find(li => li.innerText == 'Export All').click() })
             await exportAll_option.click()
@@ -185,6 +213,7 @@ async function roam_download(page, filetype) {
             const chosen_format = await page.$eval(chosen_format_selector, el => el.innerText)
 
             if (filetype != chosen_format) {
+
                 log('- Clicking Export Format')
                 await page.click(chosen_format_selector)
 
@@ -210,13 +239,16 @@ async function roam_download(page, filetype) {
             await page.waitForSelector('.bp3-spinner', { hidden: true })
 
             log('- Downloading')
-            downloads_started++
+            // downloads_started++
 
             const checkDownloads = async () => {
                 const files = await fs.readdir(download_dir)
 
-                if (files && files.filter(file => file.match(/\.zip$/)).length == downloads_started) { // contains .zip file
-                    log(filetype, 'downloaded!')
+                if (files && files.filter(file => file.match(/\.zip$/)).length) { // checks for .zip file
+
+                    log(filetype, 'downloaded!', files[0])
+                    await extract_zips(download_dir)
+
                     resolve()
                 } else checkDownloads()
             }
@@ -226,7 +258,8 @@ async function roam_download(page, filetype) {
     })
 }
 
-async function extract_zips() {
+async function extract_zips(download_dir) {
+    const extract_dir = path.join(download_dir, '_extraction')
     return new Promise(async (resolve, reject) => {
         try {
 
@@ -235,12 +268,14 @@ async function extract_zips() {
             if (files.length === 0) reject('Extraction error: download_dir is empty')
 
             for (const file of files) {
-                const file_fullpath = path.join(download_dir, file)
+                const file_fullpath = path.join(download_dir, file) // NEEDS sanitized
 
                 log('- Extracting ' + file)
                 await extract(file_fullpath, { dir: extract_dir })
                 // log('Extraction complete')
             }
+
+            await format_and_save(extract_dir)
 
             resolve()
 
@@ -249,7 +284,7 @@ async function extract_zips() {
 }
 
 
-async function format_and_save() {
+async function format_and_save(extract_dir) {
     return new Promise(async (resolve, reject) => {
         try {
 
@@ -270,6 +305,7 @@ async function format_and_save() {
 
                     log('- Saving formatted JSON')
                     fs.outputFile(new_file_fullpath, new_json)
+
                 } else if (fileext == 'edn') {
 
                     log('- Formatting EDN (this can take a couple minutes for large graphs)') // This could take a couple minutes for large graphs
@@ -316,4 +352,12 @@ function checkFormattedEDN(original, formatted) {
         error('EDN formatting error: mismatch with original')
         return false
     }
+}
+
+// because GitHub Actions log censors the entire name as '***', but this allows to differentiate among multiple graphs while keeping it mostly private for when getting help troubleshooting
+function censor(graph_name) {
+    return graph_name.split('').map((char, i) => {
+        if (i != 0 && i != graph_name.length - 1 && char != '-' && char != '_') return '*' // don't censor first letter, last letter, hyphens, and underscores
+        else return char
+    }).join('')
 }
