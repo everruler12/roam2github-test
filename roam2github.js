@@ -63,7 +63,7 @@ async function init() {
         log('Login')
         await roam_login(page)
 
-        for (const g of R2G_GRAPH.split(/,|\n/)) { // split by comma or linebreak
+        for (const g of R2G_GRAPH.split(',')) {
             const graph = g.trim()
 
             log('Open graph', censor(graph))
