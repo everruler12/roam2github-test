@@ -63,15 +63,15 @@ async function init() {
         log('Login')
         await roam_login(page)
 
-        for (const g of R2G_GRAPH.split(',')) {
-            const graph = g.trim()
+        for (const g of R2G_GRAPH.split(/,|\n/)) { // split by comma or linebreak
+            const graph_name = g.trim() // TODO handle if graph_name is blank
 
-            log('Open graph', censor(graph))
-            await roam_open_graph(page, graph)
+            log('Open graph', censor(graph_name))
+            await roam_open_graph(page, graph_name)
 
             for (const f of filetypes) {
                 if (f.backup === undefined || f.backup === true) {
-                    const download_dir = path.join(tmp_dir, graph, f.ext)
+                    const download_dir = path.join(tmp_dir, graph_name, f.ext)
                     await page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: download_dir })
 
                     log('Export', f.type)
@@ -149,7 +149,7 @@ async function roam_login(page) {
     })
 }
 
-async function roam_open_graph(page, graph) {
+async function roam_open_graph(page, graph_name) {
     return new Promise(async (resolve, reject) => {
         try {
 
@@ -164,7 +164,7 @@ async function roam_open_graph(page, graph) {
             at async Page.goto (c:\Users\cyber\Desktop\roam2github-test\node_modules\puppeteer\lib\cjs\puppeteer\common\Page.js:784:16)
             at async c:\Users\cyber\Desktop\roam2github-test\roam2github.js:156:13
             */
-            await page.goto(`https://roamresearch.com/#/app/${graph}?disablecss=true&disablejs=true`)
+            await page.goto(`https://roamresearch.com/#/app/${graph_name}?disablecss=true&disablejs=true`)
 
             // log('- Waiting for astrolabe spinner')
             await page.waitForSelector('.loading-astrolabe')
