@@ -52,8 +52,8 @@ async function init() {
         await fs.remove(tmp_dir, { recursive: true })
 
         log('Create browser')
-        // const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
-        const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
+        const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
+        // const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
 
         const page = await browser.newPage()
         page.setDefaultTimeout(TIMEOUT || 600000) // 10min default
@@ -369,7 +369,7 @@ async function error(err) {
     log('ERROR -', err)
     console.timeEnd('R2G Exit after')
     // await page.screenshot({ path: path.join(download_dir, 'error.png' }) // will need to pass page as parameter... or set as parent scope
-    // process.exit(1)
+    process.exit(1)
 }
 
 function checkFormattedEDN(original, formatted) {
