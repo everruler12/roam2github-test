@@ -202,6 +202,9 @@ async function roam_export(page, filetype, download_dir) {
             log('- Clicking "Export All" option')
             await exportAll_option.click()
 
+            log('- (Wait 1 second)')
+            await page.waitForTimeout(1000) // because sometimes timesout here
+
             const chosen_format_selector = '.bp3-dialog .bp3-button-text'
 
             log('- Waiting for export dialog')
