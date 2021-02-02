@@ -52,8 +52,8 @@ async function init() {
         await fs.remove(tmp_dir, { recursive: true })
 
         log('Create browser')
-        const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
-        // const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
+        // const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
+        const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
 
         const page = await browser.newPage()
         page.setDefaultTimeout(TIMEOUT || 600000) // 10min default
@@ -108,6 +108,7 @@ async function roam_login(page) {
 
             log('- (Wait 10 seconds)')
             await page.waitForTimeout(10000) // because Roam auto refreshes the sign-in page, as mentioned here https://github.com/MatthieuBizien/roam-to-git/issues/87#issuecomment-763281895 (and can be seen in )
+            // seems to fix `R2G ERROR - Error: Protocol error (DOM.describeNode): Cannot find context with specified id`
 
             log('- Filling email field')
             await page.type(email_selector, R2G_EMAIL)
@@ -207,11 +208,19 @@ async function roam_export(page, filetype, download_dir) {
             await page.waitForSelector(chosen_format_selector)
 
             const chosen_format = await page.$eval(chosen_format_selector, el => el.innerText)
+            log(`- format chosen is "${chosen_format}"`)
 
             if (filetype != chosen_format) {
 
-                log('- Clicking Export Format')
-                await page.click(chosen_format_selector)
+                const dropdown_button_selector = 'span.bp3-icon.bp3-icon-caret-down'
+
+                log('- Waiting for dropdown arrow')
+                await page.waitForSelector(dropdown_button_selector)
+                // const dropdown_button = await page.waitForXPath(`//span[@class='bp3-icon bp3-icon-caret-down']`)
+
+                log('- Clicking export format')
+                await page.click(dropdown_button_selector)
+                // await page.click(dropdown_button) // 2021-02-02 16:51:23.632 R2G ERROR - Error: JSHandles can be evaluated only in the context they were created!
 
                 log('- Waiting for dropdown')
                 const dropdown_option = await page.waitForXPath(`//div[@class='bp3-text-overflow-ellipsis bp3-fill' and contains(., '${filetype}')]`)
@@ -360,7 +369,7 @@ async function error(err) {
     log('ERROR -', err)
     console.timeEnd('R2G Exit after')
     // await page.screenshot({ path: path.join(download_dir, 'error.png' }) // will need to pass page as parameter... or set as parent scope
-    process.exit(1)
+    // process.exit(1)
 }
 
 function checkFormattedEDN(original, formatted) {
