@@ -202,9 +202,6 @@ async function roam_export(page, filetype, download_dir) {
             log('- Clicking "Export All" option')
             await exportAll_option.click()
 
-            log('- (Wait 1 second)')
-            await page.waitForTimeout(1000) // because sometimes gets timeout error here `Error: The operation was canceled.`
-
             const chosen_format_selector = '.bp3-dialog .bp3-button-text'
 
             log('- Waiting for export dialog')
@@ -224,6 +221,9 @@ async function roam_export(page, filetype, download_dir) {
                 log('- Clicking export format')
                 await page.click(dropdown_button_selector)
                 // await page.click(dropdown_button) // 2021-02-02 16:51:23.632 R2G ERROR - Error: JSHandles can be evaluated only in the context they were created!
+
+                log('- (Wait 1 second)')
+                await page.waitForTimeout(1000) // because sometimes gets timeout error here `Error: The operation was canceled.`
 
                 log('- Waiting for dropdown')
                 const dropdown_option = await page.waitForXPath(`//div[@class='bp3-text-overflow-ellipsis bp3-fill' and contains(., '${filetype}')]`)
