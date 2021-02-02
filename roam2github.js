@@ -34,6 +34,7 @@ const filetypes = [
     { type: "EDN", backup: BACKUP_EDN, ext: "edn" },
     // { type: "Markdown", backup: BACKUP_MARKDOWN, ext: "md" }
 ]
+log(filetypes)
 // what about specifying filetype for each graph? Maybe use settings.json in root of repo. But too complicated for non-programmers to set up.
 
 function getRepoPath() {
@@ -50,8 +51,8 @@ async function init() {
         await fs.remove(tmp_dir, { recursive: true })
 
         log('Create browser')
-        // const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
-        const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
+        const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
+        // const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
 
         const page = await browser.newPage()
         page.setDefaultTimeout(TIMEOUT || 600000) // 10min default
