@@ -21,7 +21,6 @@ try {
 } catch (err) { error(`.env file existence error: ${err}`) }
 
 const tmp_dir = path.join(__dirname, 'tmp')
-// const extract_dir = path.join(download_dir, '_extraction') // moved
 const backup_dir = IS_LOCAL ? path.join(__dirname, 'backup') : getRepoPath()
 
 const { R2G_EMAIL, R2G_PASSWORD, R2G_GRAPH, TIMEOUT, BACKUP_JSON, BACKUP_EDN, BACKUP_MARKDOWN } = process.env
@@ -51,19 +50,18 @@ async function init() {
         await fs.remove(tmp_dir, { recursive: true })
 
         log('Create browser')
-        const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
-        // const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
+        // const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
+        const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
 
         const page = await browser.newPage()
         page.setDefaultTimeout(TIMEOUT || 600000) // 10min default
-        // await page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: download_dir }) // moved
         // page.on('console', consoleObj => console.log(consoleObj.text())) // for console.log() to work in page.evaluate() https://stackoverflow.com/a/46245945
         // await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3419.0 Safari/537.36'); // https://github.com/puppeteer/puppeteer/issues/1477#issuecomment-437568281
 
         log('Login')
         await roam_login(page)
 
-        for (const g of R2G_GRAPH.split(/,|\n/)) { // split by comma or linebreak
+        for (const g of R2G_GRAPH.split(/,|\n/)) { // comma or linebreak separator
             const graph_name = g.trim() // TODO handle if graph_name is blank
 
             log('Open graph', censor(graph_name))
@@ -76,6 +74,8 @@ async function init() {
 
                     log('Export', f.type)
                     await roam_export(page, f.type, download_dir)
+
+                    // TODO run download and formatting operations asynchronously
 
                     // log('Extract zips')
                     // await extract_zips(f.ext)
@@ -109,20 +109,23 @@ async function roam_login(page) {
             log('- Waiting for email field')
             await page.waitForSelector(email_selector)
 
+            log('- (Wait 10 seconds)')
+            await page.waitForTimeout(10000) // because Roam auto refreshes the sign-in page, as mentioned here https://github.com/MatthieuBizien/roam-to-git/issues/87#issuecomment-763281895 (and can be seen in )
+
             log('- Filling email field')
             await page.type(email_selector, R2G_EMAIL)
 
             log('- Filling password field')
             await page.type('input[name="password"]', R2G_PASSWORD)
 
-            log('- Clicking "Sign In"')
-            await page.evaluate(() => {
-                [...document.querySelectorAll('button')].find(button => button.innerText == 'Sign In').click()
-            })
+            log('- Waiting for "Sign In" button')
+            const signin_button = await page.waitForXPath("//button[@class='bp3-button' and contains(., 'Sign In')]")
 
-            // possible refresh a second time on login screen https://github.com/MatthieuBizien/roam-to-git/issues/87#issuecomment-763281895
-            // R2G - Clicking "Sign In"
-            // R2G ERROR - Error: Protocol error (DOM.describeNode): Cannot find context with specified id
+            log('- Clicking "Sign In"')
+            await signin_button.click()
+            // await page.evaluate(() => {
+            //     [...document.querySelectorAll('button')].find(button => button.innerText == 'Sign In').click()
+            // })
 
             const login_error_selector = 'div[style="font-size: 12px; color: red;"]' // error message on login page
             const graphs_selector = '.my-graphs' // successful login, on graphs selection page
@@ -153,8 +156,14 @@ async function roam_open_graph(page, graph_name) {
     return new Promise(async (resolve, reject) => {
         try {
 
-            log('- Navigating to graph')
+            log('- (Wait 1 second)')
+            await page.waitForTimeout(1000) // because sometimes gets error below
+
+            log('- Navigating away to 404 (workaround)')
             await page.goto('https://roamresearch.com/404')// workaround to get disablecss and disablejs parameters to work by navigating away due to issue with puppeteer and # hash navigation (used in SPAs like Roam)
+
+            log('- (Wait 1 second)')
+            await page.waitForTimeout(1000)
             /* ERROR occasionally:
             R2G ERROR - Error: net::ERR_ABORTED at https://roamresearch.com/404
             at navigate (c:\Users\cyber\Desktop\roam2github-test\node_modules\puppeteer\lib\cjs\puppeteer\common\FrameManager.js:115:23)
@@ -164,6 +173,8 @@ async function roam_open_graph(page, graph_name) {
             at async Page.goto (c:\Users\cyber\Desktop\roam2github-test\node_modules\puppeteer\lib\cjs\puppeteer\common\Page.js:784:16)
             at async c:\Users\cyber\Desktop\roam2github-test\roam2github.js:156:13
             */
+
+            log('- Navigating to graph')
             await page.goto(`https://roamresearch.com/#/app/${graph_name}?disablecss=true&disablejs=true`)
 
             // log('- Waiting for astrolabe spinner')
@@ -197,12 +208,9 @@ async function roam_export(page, filetype, download_dir) {
             await page.click('.bp3-icon-more')
 
             log('- Waiting for "Export All" option')
-            // await page.waitForFunction(`[...document.querySelectorAll('li .bp3-fill')].find(li => li.innerText == 'Export All')`)
-            // await page.waitForFunction(() => [...document.querySelectorAll('li .bp3-fill')].find(li => li.innerText == 'Export All'))
             const exportAll_option = await page.waitForXPath("//div[@class='bp3-text-overflow-ellipsis bp3-fill' and contains(., 'Export All')]")
 
             log('- Clicking "Export All" option')
-            // await page.evaluate(() => { [...document.querySelectorAll('li .bp3-fill')].find(li => li.innerText == 'Export All').click() })
             await exportAll_option.click()
 
             const chosen_format_selector = '.bp3-dialog .bp3-button-text'
@@ -218,45 +226,76 @@ async function roam_export(page, filetype, download_dir) {
                 await page.click(chosen_format_selector)
 
                 log('- Waiting for dropdown')
-                await page.waitForSelector('.bp3-text-overflow-ellipsis')
+                const dropdown_option = await page.waitForXPath(`//div[@class='bp3-text-overflow-ellipsis bp3-fill' and contains(., '${filetype}')]`)
+                // await page.waitForSelector('.bp3-text-overflow-ellipsis')
 
-                log('- Choosing', filetype)
-                await page.evaluate((filetype) => {
-                    [...document.querySelectorAll('.bp3-text-overflow-ellipsis')].find(dropdown => dropdown.innerText == filetype).click()
-                }, filetype)
+                log('- Clicking', filetype)
+                await dropdown_option.click()
+                // await page.evaluate((filetype) => {
+                //     [...document.querySelectorAll('.bp3-text-overflow-ellipsis')].find(dropdown => dropdown.innerText == filetype).click()
+                // }, filetype)
 
             } else {
                 log('-', filetype, 'already selected')
             }
 
+            // await page.waitForTimeout(2000) // test
+            log('- Waiting for "Export All" button')
+            const exportAll_button = await page.waitForXPath("//button[@class='bp3-button bp3-intent-primary' and contains(., 'Export All')]")
+
+            // await page.waitForTimeout(2000) // test
             log('- Clicking "Export All" button')
-            await page.evaluate(() => {
-                [...document.querySelectorAll('button')].find(button => button.innerText == 'Export All').click()
-            })
+            await exportAll_button.click()
+            // await page.evaluate(() => {
+            //     [...document.querySelectorAll('button')].find(button => button.innerText == 'Export All').click()
+            // })
 
             log('- Waiting for download to start')
             await page.waitForSelector('.bp3-spinner')
+
             await page.waitForSelector('.bp3-spinner', { hidden: true })
-
             log('- Downloading')
-            // downloads_started++
 
-            const checkDownloads = async () => {
-                const files = await fs.readdir(download_dir)
+            await fs.ensureDir(download_dir)
 
-                if (files && files.filter(file => file.match(/\.zip$/)).length) { // checks for .zip file
 
-                    log(filetype, 'downloaded!', files[0])
-                    await extract_zips(download_dir)
+            async function checkDownloads() {
+                // TODO handle: Unhandled promise rejection (unknown variable like 'filetype' used instead of log(files[0],...), or when not passing download_dir in the loop to fs.readdir)
+                try {
 
-                    resolve()
-                } else checkDownloads()
+                    const files = await fs.readdir(download_dir)
+                    const file = files[0]
+
+                    if (file && file.match(/\.zip$/)) { // checks for .zip file
+
+                        log(file, 'downloaded!')
+
+                        // await extract_zips(download_dir)
+
+                        const file_fullpath = path.join(download_dir, file) // NEEDS sanitized for Markdown
+                        const extract_dir = path.join(download_dir, '_extraction')
+
+                        log('- Extracting ' + file)
+                        await extract(file_fullpath, { dir: extract_dir })
+
+                        await format_and_save(extract_dir)
+
+                        resolve()
+
+                    } else checkDownloads()
+
+                } catch (err) { reject(err) }
             }
+
+
             checkDownloads()
+
 
         } catch (err) { reject(err) }
     })
 }
+
+
 
 async function extract_zips(download_dir) {
     const extract_dir = path.join(download_dir, '_extraction')
