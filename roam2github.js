@@ -33,8 +33,10 @@ const filetypes = [
     { type: "JSON", backup: BACKUP_JSON, ext: "json" },
     { type: "EDN", backup: BACKUP_EDN, ext: "edn" },
     // { type: "Markdown", backup: BACKUP_MARKDOWN, ext: "md" }
-]
-log(filetypes)
+].map(f => {
+    (f.backup === undefined || f.backup === 'true') ? f.backup = true : f.backup = false
+    return f
+})
 // what about specifying filetype for each graph? Maybe use settings.json in root of repo. But too complicated for non-programmers to set up.
 
 function getRepoPath() {
@@ -69,7 +71,7 @@ async function init() {
             await roam_open_graph(page, graph_name)
 
             for (const f of filetypes) {
-                if (f.backup === undefined || f.backup === true) {
+                if (f.backup) {
                     const download_dir = path.join(tmp_dir, graph_name, f.ext)
                     await page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: download_dir })
 
