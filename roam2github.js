@@ -203,7 +203,7 @@ async function roam_export(page, filetype, download_dir) {
             await exportAll_option.click()
 
             log('- (Wait 1 second)')
-            await page.waitForTimeout(1000) // because sometimes timesout here
+            await page.waitForTimeout(1000) // because sometimes gets timeout error here `Error: The operation was canceled.`
 
             const chosen_format_selector = '.bp3-dialog .bp3-button-text'
 
