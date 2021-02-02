@@ -11,8 +11,7 @@ console.time('R2G Exit after')
 let IS_LOCAL
 
 try {
-    // check for local .env
-    if (fs.existsSync(path.join(__dirname, '.env'))) {
+    if (fs.existsSync(path.join(__dirname, '.env'))) { // check for local .env
         require('dotenv').config()
         IS_LOCAL = true
     } else {
@@ -32,7 +31,7 @@ if (!R2G_GRAPH) error('Secrets error: R2G_GRAPH not found') // can also check "N
 const filetypes = [
     { type: "JSON", backup: BACKUP_JSON, ext: "json" },
     { type: "EDN", backup: BACKUP_EDN, ext: "edn" },
-    // { type: "Markdown", backup: BACKUP_MARKDOWN, ext: "md" }
+    // { type: "Markdown", backup: BACKUP_MARKDOWN, ext: "md" } // not supported yet
 ].map(f => {
     (f.backup === undefined || f.backup === 'true') ? f.backup = true : f.backup = false
     return f
@@ -79,19 +78,14 @@ async function init() {
                     await roam_export(page, f.type, download_dir)
 
                     // TODO run download and formatting operations asynchronously
-
-                    // log('Extract zips')
-                    // await extract_zips(f.ext)
-
-                    // log('Format and save')
-                    // await format_and_save(f.ext)
                 }
             }
         }
 
         log('Close browser')
         browser.close()
-        // deleteDir(tmp_dir)
+
+        // await fs.remove(tmp_dir, { recursive: true })
 
         log('DONE!')
 
@@ -160,22 +154,13 @@ async function roam_open_graph(page, graph_name) {
         try {
 
             log('- (Wait 1 second)')
-            await page.waitForTimeout(1000) // because sometimes gets error below
+            await page.waitForTimeout(1000) // to prevent `R2G ERROR - Error: net::ERR_ABORTED at https://roamresearch.com/404`
 
             log('- Navigating away to 404 (workaround)')
             await page.goto('https://roamresearch.com/404')// workaround to get disablecss and disablejs parameters to work by navigating away due to issue with puppeteer and # hash navigation (used in SPAs like Roam)
 
             log('- (Wait 1 second)')
             await page.waitForTimeout(1000)
-            /* ERROR occasionally:
-            R2G ERROR - Error: net::ERR_ABORTED at https://roamresearch.com/404
-            at navigate (c:\Users\cyber\Desktop\roam2github-test\node_modules\puppeteer\lib\cjs\puppeteer\common\FrameManager.js:115:23)
-            at processTicksAndRejections (internal/process/task_queues.js:93:5)
-            at async FrameManager.navigateFrame (c:\Users\cyber\Desktop\roam2github-test\node_modules\puppeteer\lib\cjs\puppeteer\common\FrameManager.js:90:21)
-            at async Frame.goto (c:\Users\cyber\Desktop\roam2github-test\node_modules\puppeteer\lib\cjs\puppeteer\common\FrameManager.js:417:16)
-            at async Page.goto (c:\Users\cyber\Desktop\roam2github-test\node_modules\puppeteer\lib\cjs\puppeteer\common\Page.js:784:16)
-            at async c:\Users\cyber\Desktop\roam2github-test\roam2github.js:156:13
-            */
 
             log('- Navigating to graph')
             await page.goto(`https://roamresearch.com/#/app/${graph_name}?disablecss=true&disablejs=true`)
@@ -242,11 +227,9 @@ async function roam_export(page, filetype, download_dir) {
                 log('-', filetype, 'already selected')
             }
 
-            // await page.waitForTimeout(2000) // test
             log('- Waiting for "Export All" button')
             const exportAll_button = await page.waitForXPath("//button[@class='bp3-button bp3-intent-primary' and contains(., 'Export All')]")
 
-            // await page.waitForTimeout(2000) // test
             log('- Clicking "Export All" button')
             await exportAll_button.click()
             // await page.evaluate(() => {
@@ -300,32 +283,32 @@ async function roam_export(page, filetype, download_dir) {
 
 
 
-async function extract_zips(download_dir) {
-    const extract_dir = path.join(download_dir, '_extraction')
-    return new Promise(async (resolve, reject) => {
-        try {
+// async function extract_zips(download_dir) {
+//     const extract_dir = path.join(download_dir, '_extraction')
+//     return new Promise(async (resolve, reject) => {
+//         try {
 
-            const files = await fs.readdir(download_dir)
+//             const files = await fs.readdir(download_dir)
 
-            if (files.length === 0) reject('Extraction error: download_dir is empty')
+//             if (files.length === 0) reject('Extraction error: download_dir is empty')
 
-            for (const file of files) {
-                const file_fullpath = path.join(download_dir, file) // NEEDS sanitized
+//             for (const file of files) {
+//                 const file_fullpath = path.join(download_dir, file) // NEEDS sanitized
 
-                log('- Extracting ' + file)
-                await extract(file_fullpath, { dir: extract_dir })
-                // log('Extraction complete')
-            }
+//                 log('- Extracting ' + file)
+//                 await extract(file_fullpath, { dir: extract_dir })
+//                 // log('Extraction complete')
+//             }
 
-            await format_and_save(extract_dir)
+//             await format_and_save(extract_dir)
 
-            resolve()
+//             resolve()
 
-        } catch (err) { reject(err) }
-    })
-}
+//         } catch (err) { reject(err) }
+//     })
+// }
 
-
+// TODO join this with extraction
 async function format_and_save(extract_dir) {
     return new Promise(async (resolve, reject) => {
         try {
