@@ -195,11 +195,11 @@ async function roam_export(page, filetype, download_dir) {
             await page.click('.bp3-icon-more')
 
             log('- Checking for "Export All" option')
-            await page.waitForFunction(() => [...document.querySelectorAll('li .bp3-fill')].find(li => li.innerText == 'Export All'))
+            await page.waitForFunction(() => [...document.querySelectorAll('li .bp3-fill')].find(li => li.innerText.match('Export All')))
             // const exportAll_option = await page.waitForXPath("//div[@class='bp3-text-overflow-ellipsis bp3-fill' and contains(., 'Export All')]")
 
             log('- Clicking "Export All" option')
-            await page.evaluate(() => { [...document.querySelectorAll('li .bp3-fill')].find(li => li.innerText == 'Export All').click() })
+            await page.evaluate(() => { [...document.querySelectorAll('li .bp3-fill')].find(li => li.innerText.match('Export All')).click() })
             // await exportAll_option.click()
 
             const chosen_format_selector = '.bp3-dialog .bp3-button-text'
