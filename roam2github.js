@@ -2,7 +2,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const puppeteer = require('puppeteer')
 const extract = require('extract-zip')
-const truncate = require("truncate-utf8-bytes")
+const sanitize = require('sanitize-filename')
 const edn_format = require('edn-formatter').edn_formatter.core.format
 
 console.time('R2G Exit after')
@@ -297,8 +297,11 @@ async function extract_file(file, download_dir, filetype, graph_name) {
                     log('  -', entry.fileName)
                     entry.fileName = sanitizeFileName(entry.fileName)
 
-                    if (fs.pathExistsSync(path.join(extract_dir, entry.fileName)))
+                    if (fs.pathExistsSync(path.join(extract_dir, entry.fileName))) {
+
                         reject(`Extraction error: file collision detected with sanitized filename: ${entry.fileName}`)
+                        // renaming to...
+                    }
                 }
             })
 
@@ -405,39 +408,13 @@ function censor(graph_name) {
     }).join('')
 }
 
-function sanitizeFileName(file) {
-    const sanitizedFile = sanitize(file)
+function sanitizeFileName(fileName) {
+    const sanitized = sanitize(fileName.replace(/\//, '／'), { replacement: REPLACEMENT || '�' })
 
-    if (sanitizedFile != file) {
+    if (sanitized != fileName) {
 
-        log('    Sanitized:', file, '\n                                       to:', sanitizedFile)
-        return sanitizedFile
+        log('    Sanitized:', fileName, '\n                                       to:', sanitized)
+        return sanitized
 
-    } else return file
-}
-
-// Code modified from sanitize-filename v1.6.3 https://www.npmjs.com/package/sanitize-filename
-function sanitize(input) {
-    const replacement = REPLACEMENT || '�'
-
-    if (typeof input !== 'string') {
-        throw new Error('Input must be string')
-    }
-
-    var illegalRe = /[\/\?<>\\:\*\|"]/g; // original line
-    // var illegalRe = /[\?<>\\:\*\|"]/g // modified to allow '/' character (to keep subdirectories formed from Roam namespacing)
-    var controlRe = /[\x00-\x1f\x80-\x9f]/g
-    var reservedRe = /^\.+$/
-    var windowsReservedRe = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i
-    var windowsTrailingRe = /[\. ]+$/
-
-    var sanitized = input
-        .replace(/\//, '／') // added line
-        .replace(illegalRe, replacement)
-        .replace(controlRe, replacement)
-        .replace(reservedRe, replacement)
-        .replace(windowsReservedRe, replacement)
-        .replace(windowsTrailingRe, replacement)
-    return truncate(sanitized, 255)
-    // SIDE EFFECT - if truncated, will lose .md extension
+    } else return fileName
 }
