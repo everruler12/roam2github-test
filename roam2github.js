@@ -410,7 +410,7 @@ function censor(graph_name) {
 }
 
 function sanitizeFileName(fileName) {
-    const sanitized = sanitize(fileName.replace(/\//, '／'), { replacement: REPLACEMENT || '�' })
+    const sanitized = sanitize(fileName.replace(/\//g, '／'), { replacement: REPLACEMENT || '�' })
 
     if (sanitized != fileName) {
 
