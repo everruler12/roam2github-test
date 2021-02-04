@@ -294,12 +294,13 @@ async function extract_file(file, download_dir, filetype, graph_name) {
                 dir: extract_dir,
 
                 onEntry(entry, zipfile) {
-                    log('  -', entry.fileName)
+                    // log('  -', entry.fileName)
                     entry.fileName = sanitizeFileName(entry.fileName)
 
                     if (fs.pathExistsSync(path.join(extract_dir, entry.fileName))) {
 
-                        reject(`Extraction error: file collision detected with sanitized filename: ${entry.fileName}`)
+                        log('WARNING: file collision detected. Overwriting file with (sanitized) name:', entry.fileName)
+                        // reject(`Extraction error: file collision detected with sanitized filename: ${entry.fileName}`)
                         // renaming to...
                     }
                 }
