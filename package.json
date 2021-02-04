@@ -5,12 +5,11 @@
   "main": "roam2github.js",
   "dependencies": {
     "dotenv": "^8.2.0",
-    "edn-formatter": "https://github.com/everruler12/edn-formatter/tarball/main",
-    "extract-zip": "https://github.com/everruler12/extract-zip/tarball/modified",
+    "edn-formatter": "everruler12/edn-formatter",
+    "extract-zip": "everruler12/extract-zip#modified",
     "fs-extra": "^9.1.0",
     "puppeteer": "^5.5.0",
-    "sanitize-filename": "^1.6.3",
-    "truncate-utf8-bytes": "^1.0.2"
+    "sanitize-filename": "^1.6.3"
   },
   "devDependencies": {},
   "scripts": {
