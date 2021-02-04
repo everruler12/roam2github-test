@@ -3,8 +3,6 @@ const fs = require('fs-extra')
 const puppeteer = require('puppeteer')
 const extract = require('extract-zip')
 const truncate = require("truncate-utf8-bytes")
-
-// const edn_formatter = require('./edn_formatter.js').edn_formatter.core
 const edn_format = require('edn-formatter').edn_formatter.core.format
 
 console.time('R2G Exit after')
