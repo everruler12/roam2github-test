@@ -21,7 +21,7 @@ try {
 const tmp_dir = path.join(__dirname, 'tmp')
 const backup_dir = IS_LOCAL ? path.join(__dirname, 'backup') : getRepoPath()
 
-const { R2G_EMAIL, R2G_PASSWORD, R2G_GRAPH, BACKUP_JSON, BACKUP_EDN, BACKUP_MARKDOWN, REPLACEMENT, SKIP_BLANKS, TIMEOUT } = process.env
+const { R2G_EMAIL, R2G_PASSWORD, R2G_GRAPH, BACKUP_JSON, BACKUP_EDN, BACKUP_MARKDOWN, MD_REPLACEMENT, MD_SKIP_BLANKS, TIMEOUT } = process.env
 
 if (!R2G_EMAIL) error('Secrets error: R2G_EMAIL not found')
 if (!R2G_PASSWORD) error('Secrets error: R2G_PASSWORD not found')
@@ -41,7 +41,7 @@ const filetypes = [
     return f
 })
 
-const skip_blanks = (SKIP_BLANKS && SKIP_BLANKS.toLowerCase()) === 'false' ? false : true
+const skip_blanks = (MD_SKIP_BLANKS && MD_SKIP_BLANKS.toLowerCase()) === 'false' ? false : true
 
 // what about specifying filetype for each graph? Maybe use settings.json in root of repo. But too complicated for non-programmers to set up.
 
@@ -86,6 +86,7 @@ async function init() {
                     log('Export', f.type)
                     await roam_export(page, f.type, download_dir, graph_name)
 
+                    await format_and_save(f.type, download_dir, graph_name)
                     // TODO run download and formatting operations asynchronously. Can be done since json and edn are same as graph name.
                     // Await for counter expecting total operations to be done graph_names.length * filetypes.filter(f=>f.backup).length
                     // or Promises.all(arr) where arr is initiated outside For loop, and arr.push result of format_and)_save
@@ -327,17 +328,17 @@ async function extract_file(file, download_dir, filetype, graph_name) {
                 }
             })
 
-            await format_and_save(extract_dir, filetype, graph_name)
-
             resolve()
 
         } catch (err) { reject(err) }
     })
 }
 
-async function format_and_save(extract_dir, filetype, graph_name) {
+async function format_and_save(filetype, download_dir, graph_name) {
     return new Promise(async (resolve, reject) => {
         try {
+
+            const extract_dir = path.join(download_dir, '_extraction')
 
             const files = await fs.readdir(extract_dir)
 
@@ -345,12 +346,18 @@ async function format_and_save(extract_dir, filetype, graph_name) {
 
             if (filetype == 'Markdown') {
 
+
+                const markdown_dir = path.join(backup_dir, 'markdown', graph_name)
+
+                // log('- Removing old markdown directory')
+                await fs.remove(markdown_dir, { recursive: true }) // necessary, to update renamed pages
+
                 log('- Saving Markdown')
 
                 for (const file of files) {
 
                     const file_fullpath = path.join(extract_dir, file)
-                    const new_file_fullpath = path.join(backup_dir, 'markdown', graph_name, file)
+                    const new_file_fullpath = path.join(markdown_dir, file)
 
                     await fs.move(file_fullpath, new_file_fullpath, { overwrite: true })
                 }
@@ -433,7 +440,7 @@ function censor(graph_name) {
 function sanitizeFileName(fileName) {
     fileName = fileName.replace(/\//g, '／')
 
-    const sanitized = sanitize(fileName, { replacement: REPLACEMENT || '�' })
+    const sanitized = sanitize(fileName, { replacement: MD_REPLACEMENT || '�' })
 
     if (sanitized != fileName) {
 
