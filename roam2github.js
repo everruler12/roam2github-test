@@ -120,7 +120,7 @@ async function init() {
                     const download_dir = path.join(tmp_dir, graph_name, f.type.toLowerCase())
 
                     log('Export', f.type)
-                    const file = await roam_export(page, f.type, download_dir, graph_name)
+                    const file = await roam_export(page, f.type, download_dir)
 
                     await extract_file(file, download_dir)
 
@@ -231,7 +231,7 @@ async function roam_open_graph(page, graph_name) {
     })
 }
 
-async function roam_export(page, filetype, download_dir, graph_name) {
+async function roam_export(page, filetype, download_dir) {
     return new Promise(async (resolve, reject) => {
         try {
 
