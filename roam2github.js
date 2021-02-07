@@ -12,6 +12,7 @@ if (fs.existsSync(path.join(__dirname, '.env'))) { // check for local .env
 }
 
 const { R2G_EMAIL, R2G_PASSWORD, R2G_GRAPH, BACKUP_JSON, BACKUP_EDN, BACKUP_MARKDOWN, MD_REPLACEMENT, MD_SKIP_BLANKS, TIMEOUT } = process.env
+// IDEA - MD_SEPARATE_DN put daily notes in separate directory
 
 if (!R2G_EMAIL) error('Secrets error: R2G_EMAIL not found')
 if (!R2G_PASSWORD) error('Secrets error: R2G_PASSWORD not found')
@@ -101,8 +102,8 @@ async function init() {
         await fs.remove(tmp_dir, { recursive: true })
 
         log('Create browser')
-        const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
-        // const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
+        // const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
+        const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
 
 
         log('Login')
