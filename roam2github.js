@@ -7,30 +7,22 @@ const edn_format = require('edn-formatter').edn_formatter.core.format
 
 console.time('R2G Exit after')
 
-log(__dirname)
-
-
-path.join('home', 'runner', 'work')
-// read file for one folder
-// read file for one folder in that folder, same name
-IS_GITHUB_ACTION
-
-
 
 // NEED better check, because .env could exist in repo. like check if secrets exist in process.env, if so, IS_GITHUB_ACTION = true, other wise try local .env, and check again
-let IS_LOCAL
+// let IS_LOCAL
 
-try {
-    if (fs.existsSync(path.join(__dirname, '.env'))) { // check for local .env
-        require('dotenv').config()
-        IS_LOCAL = true
-    } else {
-        IS_LOCAL = false
-    }
-} catch (err) { error(`.env file existence error: ${err}`) }
+// try {
+if (fs.existsSync(path.join(__dirname, '.env'))) { // check for local .env
+    require('dotenv').config()
+    // IS_LOCAL = true
+}
+//      else {
+//         IS_LOCAL = false
+//     }
+// } catch (err) { error(`.env file existence error: ${err}`) }
 
 const tmp_dir = path.join(__dirname, 'tmp')
-const backup_dir = IS_LOCAL ? path.join(__dirname, 'backup') : getRepoPath()
+const backup_dir = getRepoPath() ? getRepoPath() : path.join(__dirname, 'backup')
 
 const { R2G_EMAIL, R2G_PASSWORD, R2G_GRAPH, BACKUP_JSON, BACKUP_EDN, BACKUP_MARKDOWN, MD_REPLACEMENT, MD_SKIP_BLANKS, TIMEOUT } = process.env
 
@@ -57,10 +49,30 @@ const skip_blanks = (MD_SKIP_BLANKS && MD_SKIP_BLANKS.toLowerCase()) === 'false'
 // what about specifying filetype for each graph? Maybe use settings.json in root of repo. But too complicated for non-programmers to set up.
 
 function getRepoPath() {
-    // This works because actions/checkout@v2 duplicates repo name in path /home/runner/work/roam-backup/roam-backup
-    const parent_dir = path.join(__dirname, '..')
-    const repo_name = path.basename(parent_dir)
-    return path.join(parent_dir, repo_name)
+    const ubuntuPath = path.join('home', 'runner', 'work')
+
+    const exists = await fs.pathExists(ubuntuPath)
+
+    if (exists) {
+
+        const files = await fs.readdir(extract_dir)
+
+        if (files.length !== 1) {
+
+            log(files.length, 'dirs detected in', ubuntuPath, '\nNot GitHub Action')
+            return false
+
+        } else {
+
+            log('Is GitHub Action. (need to add check subdir)')
+            repo_name = files[0]
+            return path.join(ubuntuPath, repo_name, repo_name) // actions/checkout@v2 outputs to path /home/runner/work/<repo_name>/<repo_name>
+        }
+
+    } else {
+        log(ubuntuPath, 'does not exist. Not GitHub Action')
+        return false
+    }
 }
 
 init()
