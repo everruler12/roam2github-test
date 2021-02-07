@@ -59,12 +59,12 @@ const edn_format = require('edn-formatter').edn_formatter.core.format;
                     return path.join(ubuntuPath, repo_name, repo_name) // actions/checkout@v2 outputs to path /home/runner/work/<repo_name>/<repo_name>
 
                 } else {
-                    log(files.length, 'dirs detected in', path.join(ubuntuPath, repo_name), '\nNot GitHub Action')
+                    log(files, 'detected in', path.join(ubuntuPath, repo_name), '\nNot GitHub Action')
                     return false
                 }
 
             } else {
-                log(files.length, 'dirs detected in', ubuntuPath, '\nNot GitHub Action')
+                log(files, 'detected in', ubuntuPath, '\nNot GitHub Action')
                 return false
             }
 
