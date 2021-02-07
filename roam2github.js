@@ -9,6 +9,14 @@ console.time('R2G Exit after')
 
 log(__dirname)
 
+
+path.join('home', 'runner', 'work')
+// read file for one folder
+// read file for one folder in that folder, same name
+IS_GITHUB_ACTION
+
+
+
 // NEED better check, because .env could exist in repo. like check if secrets exist in process.env, if so, IS_GITHUB_ACTION = true, other wise try local .env, and check again
 let IS_LOCAL
 
