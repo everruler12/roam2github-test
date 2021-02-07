@@ -60,21 +60,21 @@ const edn_format = require('edn-formatter').edn_formatter.core.format;
                         if (files2.length === 1 && files2[0] == repo_name) {
 
                             log(files2, 'Is GitHub Action. (need to add check subdir)')
-                            return path.join(ubuntuPath, repo_name, repo_name) // actions/checkout@v2 outputs to path /home/runner/work/<repo_name>/<repo_name>
+                            resolve(path.join(ubuntuPath, repo_name, repo_name)) // actions/checkout@v2 outputs to path /home/runner/work/<repo_name>/<repo_name>
 
                         } else {
                             log(files, 'detected in', path.join(ubuntuPath, repo_name), '\nNot GitHub Action')
-                            return false
+                            resolve(false)
                         }
 
                     } else {
                         log(files, 'detected in', ubuntuPath, '\nNot GitHub Action')
-                        return false
+                        resolve(false)
                     }
 
                 } else {
                     log(ubuntuPath, 'does not exist. Not GitHub Action')
-                    return false
+                    resolve(false)
                 }
 
             } catch (err) { reject(err) }
