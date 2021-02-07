@@ -47,7 +47,8 @@ const edn_format = require('edn-formatter').edn_formatter.core.format;
         const exists = await fs.pathExists(ubuntuPath)
 
         if (exists) {
-            const files = await fs.readdir(ubuntuPath)
+            const files = (await fs.readdir(ubuntuPath).filter)
+                .filter(f => !f.startsWith('_')) // filter out [ '_PipelineMapping', '_actions', '_temp', ]
 
             if (files.length === 1) {
                 repo_name = files[0]
@@ -55,7 +56,7 @@ const edn_format = require('edn-formatter').edn_formatter.core.format;
 
                 if (files2.length === 1 && files2[0] == repo_name) {
 
-                    log('Is GitHub Action. (need to add check subdir)')
+                    log(files2, 'Is GitHub Action. (need to add check subdir)')
                     return path.join(ubuntuPath, repo_name, repo_name) // actions/checkout@v2 outputs to path /home/runner/work/<repo_name>/<repo_name>
 
                 } else {
