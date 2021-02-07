@@ -47,7 +47,7 @@ const edn_format = require('edn-formatter').edn_formatter.core.format;
         const exists = await fs.pathExists(ubuntuPath)
 
         if (exists) {
-            const files = (await fs.readdir(ubuntuPath).filter)
+            const files = (await fs.readdir(ubuntuPath))
                 .filter(f => !f.startsWith('_')) // filter out [ '_PipelineMapping', '_actions', '_temp', ]
 
             if (files.length === 1) {
