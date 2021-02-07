@@ -7,6 +7,8 @@ const edn_format = require('edn-formatter').edn_formatter.core.format
 
 console.time('R2G Exit after')
 
+log(__dirname)
+
 // NEED better check, because .env could exist in repo. like check if secrets exist in process.env, if so, IS_GITHUB_ACTION = true, other wise try local .env, and check again
 let IS_LOCAL
 
@@ -18,6 +20,7 @@ try {
         IS_LOCAL = false
     }
 } catch (err) { error(`.env file existence error: ${err}`) }
+
 const tmp_dir = path.join(__dirname, 'tmp')
 const backup_dir = IS_LOCAL ? path.join(__dirname, 'backup') : getRepoPath()
 
