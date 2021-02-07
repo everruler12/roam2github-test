@@ -43,36 +43,42 @@ const edn_format = require('edn-formatter').edn_formatter.core.format;
     // what about specifying filetype for each graph? Maybe use settings.json in root of repo. But too complicated for non-programmers to set up.
 
     async function getRepoPath() {
-        const ubuntuPath = path.join('/', 'home', 'runner', 'work')
-        const exists = await fs.pathExists(ubuntuPath)
+        return new Promise(async (resolve, reject) => {
+            try {
 
-        if (exists) {
-            const files = (await fs.readdir(ubuntuPath))
-                .filter(f => !f.startsWith('_')) // filter out [ '_PipelineMapping', '_actions', '_temp', ]
+                const ubuntuPath = path.join('/', 'home', 'runner', 'work')
+                const exists = await fs.pathExists(ubuntuPath)
 
-            if (files.length === 1) {
-                repo_name = files[0]
-                const files2 = await fs.readdir(path.join(ubuntuPath, repo_name))
+                if (exists) {
+                    const files = (await fs.readdir(ubuntuPath))
+                        .filter(f => !f.startsWith('_')) // filter out [ '_PipelineMapping', '_actions', '_temp', ]
 
-                if (files2.length === 1 && files2[0] == repo_name) {
+                    if (files.length === 1) {
+                        repo_name = files[0]
+                        const files2 = await fs.readdir(path.join(ubuntuPath, repo_name))
 
-                    log(files2, 'Is GitHub Action. (need to add check subdir)')
-                    return path.join(ubuntuPath, repo_name, repo_name) // actions/checkout@v2 outputs to path /home/runner/work/<repo_name>/<repo_name>
+                        if (files2.length === 1 && files2[0] == repo_name) {
+
+                            log(files2, 'Is GitHub Action. (need to add check subdir)')
+                            return path.join(ubuntuPath, repo_name, repo_name) // actions/checkout@v2 outputs to path /home/runner/work/<repo_name>/<repo_name>
+
+                        } else {
+                            log(files, 'detected in', path.join(ubuntuPath, repo_name), '\nNot GitHub Action')
+                            return false
+                        }
+
+                    } else {
+                        log(files, 'detected in', ubuntuPath, '\nNot GitHub Action')
+                        return false
+                    }
 
                 } else {
-                    log(files, 'detected in', path.join(ubuntuPath, repo_name), '\nNot GitHub Action')
+                    log(ubuntuPath, 'does not exist. Not GitHub Action')
                     return false
                 }
 
-            } else {
-                log(files, 'detected in', ubuntuPath, '\nNot GitHub Action')
-                return false
-            }
-
-        } else {
-            log(ubuntuPath, 'does not exist. Not GitHub Action')
-            return false
-        }
+            } catch (err) { reject(err) }
+        })
     }
 
     init()
