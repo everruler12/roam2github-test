@@ -43,7 +43,7 @@ const edn_format = require('edn-formatter').edn_formatter.core.format;
     // what about specifying filetype for each graph? Maybe use settings.json in root of repo. But too complicated for non-programmers to set up.
 
     async function getRepoPath() {
-        const ubuntuPath = path.join('home', 'runner', 'work')
+        const ubuntuPath = path.join('/', 'home', 'runner', 'work')
         const exists = await fs.pathExists(ubuntuPath)
 
         if (exists) {
