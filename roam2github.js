@@ -40,11 +40,13 @@ const timeout = TIMEOUT || 600000 // 10min default
 
 const tmp_dir = path.join(__dirname, 'tmp')
 
-    ;
+// ;
 // (async () => {
 // const repo_path = await getRepoPath()
-const backup_dir = getRepoPath() ? getRepoPath() : path.join(__dirname, 'backup')
+const repo_path = getRepoPath()
+const backup_dir = repo_path ? repo_path : path.join(__dirname, 'backup')
 // })();
+
 
 function getRepoPath() {
     const ubuntuPath = path.join('/', 'home', 'runner', 'work')
