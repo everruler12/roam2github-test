@@ -69,7 +69,7 @@ function getRepoPath() {
                 log(files2, 'GitHub Actions path found')
                 return path.join(ubuntuPath, repo_name, repo_name) // actions/checkout@v2 outputs to path /home/runner/work/<repo_name>/<repo_name>
 
-            } if (files2.length == 2 && withoutR2G.length == 1 && withoutR2G == repo_name) {
+            } if (files2.length == 2 && withoutR2G.length == 1 && withoutR2G[0] == repo_name) {
 
                 log(files2, 'GitHub Actions path found. Old main.yml being used.')
                 return path.join(ubuntuPath, repo_name, repo_name) // actions/checkout@v2 outputs to path /home/runner/work/<repo_name>/<repo_name>
