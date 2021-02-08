@@ -312,7 +312,7 @@ async function roam_export(page, filetype, download_dir) {
             await page.waitForSelector('.bp3-spinner', { hidden: true })
             log('- Downloading')
 
-            await checkDownloads(download_dir)
+            await waitForDownload(download_dir)
 
             resolve()
 
@@ -320,19 +320,24 @@ async function roam_export(page, filetype, download_dir) {
     })
 }
 
-async function checkDownloads(download_dir) {
+function waitForDownload(download_dir) {
     return new Promise(async (resolve, reject) => {
         try {
 
-            const files = await fs.readdir(download_dir)
-            const file = files[0]
+            checkDownloads()
 
-            if (file && file.match(/\.zip$/)) { // checks for .zip file
+            async function checkDownloads() {
 
-                log(file, 'downloaded!')
-                resolve()
+                const files = await fs.readdir(download_dir)
+                const file = files[0]
 
-            } else checkDownloads(download_dir)
+                if (file && file.match(/\.zip$/)) { // checks for .zip file
+
+                    log(file, 'downloaded!')
+                    resolve()
+
+                } else checkDownloads()
+            }
 
         } catch (err) { reject(err) }
     })
@@ -344,6 +349,7 @@ async function extract_file(download_dir) {
 
             const files = await fs.readdir(download_dir)
             const file = files[0]
+            // TODO filter for .zip
 
             if (files.length === 0) reject('Extraction error: download_dir is empty')
             if (files.length > 1) reject('Extraction error: download_dir contains more than one file')
