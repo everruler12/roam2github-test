@@ -348,11 +348,13 @@ async function extract_file(download_dir) {
         try {
 
             const files = await fs.readdir(download_dir)
-            const file = files[0]
-            // TODO filter for .zip
 
             if (files.length === 0) reject('Extraction error: download_dir is empty')
             if (files.length > 1) reject('Extraction error: download_dir contains more than one file')
+
+            const file = files[0]
+
+            if (!file.match(/\.zip$/)) reject('Extraction error: .zip not found')
 
             const file_fullpath = path.join(download_dir, file)
             const extract_dir = path.join(download_dir, '_extraction')
