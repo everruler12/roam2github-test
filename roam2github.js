@@ -250,6 +250,7 @@ async function roam_open_graph(page, graph_name) {
 async function roam_export(page, filetype, download_dir) {
     return new Promise(async (resolve, reject) => {
         try {
+            await fs.ensureDir(download_dir)
 
             // log('- Checking for "..." button', filetype)
             await page.waitForSelector('.bp3-icon-more')
@@ -311,11 +312,9 @@ async function roam_export(page, filetype, download_dir) {
             await page.waitForSelector('.bp3-spinner', { hidden: true })
             log('- Downloading')
 
-            await fs.ensureDir(download_dir)
+            await checkDownloads(download_dir)
 
-            const file = await checkDownloads(download_dir)
-
-            resolve(file)
+            resolve()
 
         } catch (err) { reject(err) }
     })
@@ -331,7 +330,7 @@ async function checkDownloads(download_dir) {
             if (file && file.match(/\.zip$/)) { // checks for .zip file
 
                 log(file, 'downloaded!')
-                resolve(file)
+                resolve()
 
             } else checkDownloads(download_dir)
 
