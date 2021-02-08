@@ -63,21 +63,25 @@ function getRepoPath() {
 
             if (files2.length === 1 && files2[0] == repo_name) {
 
+                // log(files2, 'GitHub Action path found')
                 log(files2, 'GitHub Action path found')
                 return path.join(ubuntuPath, repo_name, repo_name) // actions/checkout@v2 outputs to path /home/runner/work/<repo_name>/<repo_name>
 
             } else {
-                log(files, 'detected in', path.join(ubuntuPath, repo_name), '\nNot GitHub Action')
+                // log(files, 'detected in', path.join(ubuntuPath, repo_name), '\nNot GitHub Action')
+                log('GitHub Action path not found. Running locally')
                 return false
             }
 
         } else {
-            log(files, 'detected in', ubuntuPath, '\nNot GitHub Action')
+            // log(files, 'detected in', ubuntuPath, '\nNot GitHub Action')
+            log('GitHub Action path not found. Running locally')
             return false
         }
 
     } else {
-        log(ubuntuPath, 'does not exist. Not GitHub Action')
+        // log(ubuntuPath, 'does not exist. Not GitHub Action')
+        log('GitHub Action path not found. Running locally')
         return false
     }
 }
@@ -119,6 +123,7 @@ async function init() {
             for (const f of backup_types) {
                 if (f.backup) {
                     const download_dir = path.join(tmp_dir, graph_name, f.type.toLowerCase())
+                    await page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: download_dir })
 
                     log('Export', f.type)
                     const file = await roam_export(page, f.type, download_dir)
@@ -235,8 +240,6 @@ async function roam_open_graph(page, graph_name) {
 async function roam_export(page, filetype, download_dir) {
     return new Promise(async (resolve, reject) => {
         try {
-
-            await page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: download_dir })
 
             // log('- Checking for "..." button', filetype)
             await page.waitForSelector('.bp3-icon-more')
