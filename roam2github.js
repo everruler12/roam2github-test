@@ -64,6 +64,8 @@ function getRepoPath() {
 
             const withoutR2G = files2.filter(f => f == 'roam2github') // for old main.yml
 
+            log(files2.length == 2, withoutR2G.length == 1, withoutR2G[0] == repo_name)
+
             if (files2.length === 1 && files2[0] == repo_name) {
 
                 log(files2, 'GitHub Actions path found')
