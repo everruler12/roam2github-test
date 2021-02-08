@@ -69,19 +69,19 @@ function getRepoPath() {
 
             } else {
                 // log(files, 'detected in', path.join(ubuntuPath, repo_name), '\nNot GitHub Action')
-                log('GitHub Action path not found. Using local path')
+                log('GitHub Actions path not found. Using local path')
                 return false
             }
 
         } else {
             // log(files, 'detected in', ubuntuPath, '\nNot GitHub Action')
-            log('GitHub Action path not found. Using local path')
+            log('GitHub Actions path not found. Using local path')
             return false
         }
 
     } else {
         // log(ubuntuPath, 'does not exist. Not GitHub Action')
-        log('GitHub Action path not found. Using local path')
+        log('GitHub Actions path not found. Using local path')
         return false
     }
 }
