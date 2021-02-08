@@ -52,14 +52,17 @@ const backup_dir = repo_path ? repo_path : path.join(__dirname, 'backup')
 function getRepoPath() {
     const ubuntuPath = path.join('/', 'home', 'runner', 'work')
     const exists = fs.pathExistsSync(ubuntuPath)
+    log({ exists })
 
     if (exists) {
         const files = fs.readdirSync(ubuntuPath)
             .filter(f => !f.startsWith('_')) // filter out [ '_PipelineMapping', '_actions', '_temp', ]
+        log({ files })
 
         if (files.length === 1) {
             repo_name = files[0]
             const files2 = fs.readdirSync(path.join(ubuntuPath, repo_name))
+            log({ files2 })
 
             if (files2.length === 1 && files2[0] == repo_name) {
 
