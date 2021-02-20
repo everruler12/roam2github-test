@@ -46,7 +46,7 @@ const tmp_dir = path.join(__dirname, 'tmp')
 // (async () => {
 // const repo_path = await getRepoPath()
 const repo_path = getRepoPath()
-const backup_dir = repo_path ? repo_path : path.join(__dirname, 'backup')
+const backup_dir = repo_path ? repo_path : path.join(__dirname, 'backup') // if no repo_path use local path
 // })();
 
 
@@ -56,7 +56,7 @@ function getRepoPath() {
 
     if (exists) {
         const files = fs.readdirSync(ubuntuPath)
-            .filter(f => !f.startsWith('_')) // filter out [ '_PipelineMapping', '_actions', '_temp', ]
+            .filter(f => !f.startsWith('_')) // filters out [ '_PipelineMapping', '_actions', '_temp', ]
 
         if (files.length === 1) {
             repo_name = files[0]
@@ -67,14 +67,12 @@ function getRepoPath() {
 
             if (files2.length === 1 && files2[0] == repo_name) {
 
-                // log(files2, 'GitHub Actions path found')
-                log('GitHub Actions path found')
+                log('Detected GitHub Actions path')
                 return path.join(ubuntuPath, repo_name, repo_name) // actions/checkout@v2 outputs to path /home/runner/work/<repo_name>/<repo_name>
 
             } if (files2.length == 2 && withoutR2G.length == 1 && withoutR2G[0] == repo_name) {
 
-                // log(files2, 'GitHub Actions path found. (Old main.yml being used)')
-                log('GitHub Actions path found. (Old main.yml being used)')
+                log('Detected GitHub Actions path found. (Old main.yml being used, with potential "roam2github" repo name conflict)')
                 return path.join(ubuntuPath, repo_name, repo_name) // actions/checkout@v2 outputs to path /home/runner/work/<repo_name>/<repo_name>
 
             } else {
