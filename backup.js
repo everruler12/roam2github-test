@@ -103,8 +103,8 @@ async function init() {
         await fs.remove(tmp_dir, { recursive: true })
 
         log('Create browser')
-        const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
-        // const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
+        // const browser = await puppeteer.launch({ args: ['--no-sandbox'] }) // to run in GitHub Actions
+        const browser = await puppeteer.launch({ headless: false }) // to test locally and see what's going on
 
 
         log('Login')
@@ -260,6 +260,13 @@ async function roam_export(page, filetype, download_dir) {
                 await page.keyboard.press('Escape')
                 await page.waitForSelector('.rm-quick-capture-sync-modal', { hidden: true })
                 log('- "Sync Quick Capture Notes" modal closed')
+            }
+
+            if (await page.$('.rm-modal-dialog--expired-plan')) {
+                log('- Detected "Your subscription to Roam has expired." modal. Closing')
+                await page.keyboard.press('Escape')
+                await page.waitForSelector('.rm-modal-dialog--expired-plan', { hidden: true })
+                log('- Expired subscription modal closed')
             }
 
             log('- Clicking "..." button')
